@@ -367,6 +367,25 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .kanban { grid-template-columns: 1fr 1fr; }
   .page { padding: 6px 14px 40px; }
 }
+
+/* ---------- factory flow & dept tiles ---------- */
+.flow-strip { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.flow-card { flex: 1; min-width: 150px; background: #f8fafc; border: 1px solid var(--line); border-top: 4px solid var(--fc, var(--primary)); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .13s; }
+.flow-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--fc); }
+.flow-top { display: flex; align-items: center; gap: 8px; }
+.flow-n { width: 20px; height: 20px; border-radius: 50%; background: var(--fc); color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; flex: none; }
+.flow-lb { font-size: 12.5px; font-weight: 800; color: var(--ink-2); }
+.flow-count { font-size: 27px; font-weight: 800; letter-spacing: -.5px; margin-top: 6px; line-height: 1.1; }
+.flow-sub { font-size: 11.5px; color: var(--mut); margin-top: 3px; }
+.flow-arrow { align-self: center; color: var(--mut-2); flex: none; display: grid; place-items: center; }
+.dept-tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.dept-tile { background: #fff; border: 1px solid var(--line); border-radius: 13px; padding: 14px; cursor: pointer; transition: all .13s; border-top: 4px solid var(--tc, var(--primary)); }
+.dept-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.dept-tile .dt-ic { width: 34px; height: 34px; border-radius: 10px; color: #fff; display: grid; place-items: center; }
+.dept-tile b { display: block; margin-top: 9px; font-size: 13px; }
+.dept-tile .mini { display: block; margin-top: 2px; }
+@media (max-width: 1180px) { .dept-tiles { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .dept-tiles { grid-template-columns: 1fr 1fr; } .flow-arrow { display: none; } }
 </style>
 </head>
 <body>
@@ -1627,20 +1646,21 @@ function renderLogin(err) {
 
 const NAV = [
   { label: 'Overview' },
-  { id: 'dashboard', icon: 'dashboard', text: 'Dashboard' },
+  { id: 'dashboard', icon: 'dashboard', text: 'Factory Dashboard' },
   { id: 'activity', icon: 'activity', text: 'Activity Thread' },
   { label: 'Commercial' },
   { id: 'orders', icon: 'orders', text: 'Merchandising' },
   { id: 'sampling', icon: 'sampling', text: 'Sampling & Development' },
   { id: 'purchase', icon: 'purchase', text: 'Purchase' },
-  { label: 'Manufacturing' },
+  { label: 'The Mill' },
+  { id: 'inventory', icon: 'inventory', text: 'Yarn & Trims Store' },
   { id: 'dye', icon: 'dye', text: 'Dye House' },
+  { label: 'The Factory' },
   { id: 'production', icon: 'production', text: 'Production Floors' },
   { id: 'quality', icon: 'quality', text: 'Quality Control' },
-  { label: 'Logistics' },
+  { label: 'Dispatch' },
   { id: 'shipping', icon: 'shipping', text: 'Shipping' },
-  { id: 'inventory', icon: 'inventory', text: 'Inventory & Store' },
-  { label: 'Back Office' },
+  { label: 'Company' },
   { id: 'finance', icon: 'finance', text: 'Finance & Costing' },
   { id: 'hr', icon: 'hr', text: 'HR & Payroll' },
   { id: 'reports', icon: 'reports', text: 'Reports Center' },
@@ -1728,7 +1748,7 @@ async function route() {
     production: ['Production Floors', 'Knitting → cutting → sewing → finishing — WIP live'],
     quality: ['Quality Control', 'Inline & final AQL inspections — nothing ships without a pass'],
     shipping: ['Shipping Department', 'Bookings, documents & deliveries'],
-    inventory: ['Inventory & Store', 'Yarn, dyes, chemicals & trims — live stock'],
+    inventory: ['Yarn & Trims Store', 'Yarn, dyes, chemicals, trims & packing — live stock'],
     finance: ['Finance & Costing', 'Costing sheets, margins, invoices, receivables & expenses'],
     hr: ['HR & Payroll', 'Employees, attendance & monthly payroll'],
     reports: ['Reports Center', 'Printable management reports — every department'],
@@ -1808,70 +1828,66 @@ async function viewDashboard(view) {
   const d = await api('/dashboard');
   const hour = new Date().getHours();
   const hello = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const deptLine = {
-    Management: 'here is the whole factory at a glance.',
-    Merchandising: 'your orders and buyers are moving — keep the pipeline tight.',
-    Purchase: 'requisitions are waiting on your desk — approve and place POs.',
-    'Dye House': 'the batch board is live — keep shades true and machines hot.',
-    Shipping: 'cartons, bookings and docs — get those containers out on time.'
-  }[state.user.dept] || 'all departments are under one roof.';
 
-  const kpis =
-    kpi('Active orders', d.kpis.activeOrders, 'pipeline value ' + money(d.kpis.activeValue), '#6366f1') +
-    kpi('In dye house', d.kpis.inDyeing, num(d.kpis.dyeingKg) + ' kg on machines', '#8b5cf6') +
-    kpi('On floors (WIP)', d.kpis.wipOrders, 'production orders running', '#ea580c') +
-    kpi('Open POs', d.kpis.openPOs, money(d.kpis.openPOValue) + ' inbound', '#f59e0b') +
-    kpi('In transit', d.kpis.inTransit, 'containers on the water', '#0ea5e9') +
-    kpi('Receivables', money(d.kpis.receivable), d.kpis.qcPending + ' QC · ' + d.kpis.samplesOpen + ' samples open', '#16a34a') +
-    kpi('Low stock alerts', d.kpis.lowStock, d.kpis.lowStock ? '<b class="warn">reorder needed</b>' : 'stock healthy', d.kpis.lowStock ? '#ef4444' : '#10b981');
-
-  const maxStage = Math.max(1, ...d.stageCounts.map(s => s.count));
-  const pipe = '<div class="pipe">' + d.stageCounts.map(s =>
-    '<div class="pipe-row"><span class="pl">' + esc(s.stage) + '</span><div class="pipe-bar"><div class="pipe-fill" style="width:' + (s.count / maxStage * 100) + '%;background:' + STAGE_COLORS[s.stage] + '"></div></div><span class="pc num">' + s.count + '</span></div>'
+  // the factory flow: how every knitwear order travels, buyer PO to cash
+  const flow = [
+    { n: 1, label: 'Buyer Orders', count: d.kpis.activeOrders, sub: money(d.kpis.activeValue) + ' in pipeline', color: '#6366f1', go: '#/orders', icon: 'orders' },
+    { n: 2, label: 'Yarn & Trims', count: d.kpis.openPOs + d.kpis.lowStock, sub: d.kpis.lowStock + ' low · ' + money(d.kpis.openPOValue) + ' inbound', color: '#f59e0b', go: '#/purchase', icon: 'purchase' },
+    { n: 3, label: 'Dye House', count: d.kpis.inDyeing, sub: num(d.kpis.dyeingKg) + ' kg on machines', color: '#8b5cf6', go: '#/dye', icon: 'dye' },
+    { n: 4, label: 'Knit & Sew', count: d.kpis.wipOrders, sub: num(d.kpis.dyedReadyKg) + ' kg dyed fabric ready', color: '#ea580c', go: '#/production', icon: 'production' },
+    { n: 5, label: 'QC & Packing', count: (d.tasks.qcQueue || 0) + (d.tasks.packingQueue || 0), sub: d.tasks.inspectionsPending + ' inspection(s) open', color: '#0d9488', go: '#/quality', icon: 'quality' },
+    { n: 6, label: 'Shipped & Cash', count: d.kpis.inTransit, sub: money(d.kpis.receivable) + ' to collect', color: '#0ea5e9', go: '#/shipping', icon: 'shipping' }
+  ];
+  const flowHtml = '<div class="flow-strip">' + flow.map((x, i) =>
+    '<div class="flow-card" data-go="' + x.go + '" style="--fc:' + x.color + '">' +
+    '<div class="flow-top"><span class="flow-n">' + x.n + '</span><span class="flow-lb">' + x.label + '</span></div>' +
+    '<div class="flow-count num">' + x.count + '</div><div class="flow-sub">' + x.sub + '</div></div>' +
+    (i < flow.length - 1 ? '<div class="flow-arrow">' + ICONS.arrow + '</div>' : '')
   ).join('') + '</div>';
 
-  const segs = d.stageCounts.filter(s => s.count).map(s => ({ color: STAGE_COLORS[s.stage], value: s.count }));
-  const donut = '<div class="donut-wrap">' + donutSvg(segs) +
-    '<div class="legend">' + segs.map(s => '<span class="lg"><i style="background:' + s.color + '"></i>' + d.stageCounts.find(x => STAGE_COLORS[x.stage] === s.color).stage + ' (' + s.value + ')</span>').join('') + '</div></div>';
-
-  const maxBar = Math.max(1, ...d.shipmentsByMonth.map(b => b.count));
-  const bars = '<div class="bar-chart">' + d.shipmentsByMonth.map(b =>
-    '<div class="bar-col"><span class="bar-val">' + b.count + '</span><div class="bar" style="height:' + Math.max(3, b.count / maxBar * 100) + '%"></div><span class="bar-lb">' + b.label + '</span></div>'
+  // department launcher tiles
+  const tiles = [
+    ['orders', 'Merchandising', d.kpis.activeOrders + ' live orders', '#/orders', '#6366f1'],
+    ['sampling', 'Sampling', d.kpis.samplesOpen + ' with buyers', '#/sampling', '#818cf8'],
+    ['purchase', 'Purchase', d.tasks.reqsPending + ' reqs to approve', '#/purchase', '#f59e0b'],
+    ['inventory', 'Yarn & Trims Store', d.kpis.lowStock + ' items low', '#/inventory', '#d97706'],
+    ['dye', 'Dye House', d.kpis.inDyeing + ' batches running', '#/dye', '#8b5cf6'],
+    ['production', 'Production Floors', d.kpis.wipOrders + ' orders on floor', '#/production', '#ea580c'],
+    ['quality', 'Quality Control', d.kpis.qcPending + ' inspections open', '#/quality', '#0d9488'],
+    ['shipping', 'Shipping & Dispatch', (d.kpis.inTransit + d.tasks.packingQueue) + ' shipments moving', '#/shipping', '#0ea5e9'],
+    ['finance', 'Finance', money(d.kpis.receivable) + ' receivable', '#/finance', '#16a34a'],
+    ['hr', 'HR & Payroll', d.kpis.headcount + ' employees', '#/hr', '#db2777']
+  ];
+  const tilesHtml = '<div class="dept-tiles">' + tiles.map(t =>
+    '<div class="dept-tile" data-go="' + t[3] + '" style="--tc:' + t[4] + '">' +
+    '<span class="dt-ic" style="background:' + t[4] + '">' + ICONS[t[0]] + '</span>' +
+    '<b>' + t[1] + '</b><span class="mini">' + t[2] + '</span></div>'
   ).join('') + '</div>';
 
   const tasks =
     taskRow('purchase', '#f59e0b', d.tasks.reqsPending, 'Requisitions awaiting approval', 'Purchase desk', '#/purchase') +
-    taskRow('dye', '#8b5cf6', d.tasks.qcQueue, 'Batches in QC queue', 'Dye House lab', '#/dye') +
+    taskRow('dye', '#8b5cf6', d.tasks.qcQueue, 'Dye batches in QC queue', 'Dye House lab', '#/dye') +
     taskRow('dye', '#ef4444', d.tasks.rework, 'Batches sent to rework', 'Shade repair', '#/dye') +
     taskRow('quality', '#0d9488', d.tasks.inspectionsPending, 'Inspections awaiting result', 'Quality Control', '#/quality') +
     taskRow('sampling', '#6366f1', d.tasks.samplesWaiting, 'Samples waiting on buyers', 'Sampling desk', '#/sampling') +
-    taskRow('shipping', '#0ea5e9', d.tasks.packingQueue, 'Shipments being packed', 'Packing floor', '#/shipping') +
-    taskRow('purchase', '#f59e0b', d.tasks.arrivingPOs, 'POs arriving this week', 'Gate & store', '#/purchase');
+    taskRow('shipping', '#0ea5e9', d.tasks.packingQueue, 'Shipments being packed', 'Packing floor', '#/shipping');
   const due = d.tasks.dueSoon.slice(0, 4).map(o =>
     '<div class="task" data-go="#/orders/' + esc(o.id) + '"><span class="count-orb" style="background:' + STAGE_COLORS[o.stage] + '">' + esc(o.id.replace('ORD-', '')) + '</span><div class="tn"><b>' + esc(o.style) + '</b><div class="mini">' + esc(o.buyerName) + ' · ' + esc(o.stage) + ' · ' + fmtDate(o.deliveryDate) + '</div></div></div>'
   ).join('');
 
   view.innerHTML =
-    '<div class="card hero mb"><h2>' + hello + ', ' + esc(state.user.name.split(' ')[0]) + ' — ' + deptLine + '</h2><p>' + esc(state.user.dept) + ' console · everything below updates live as departments act.</p>' +
-    '<div class="h-stats"><div class="hs"><b class="num">' + money(d.kpis.activeValue) + '</b><span>Order book</span></div><div class="hs"><b class="num">' + num(d.kpis.dyedReadyKg) + ' kg</b><span>Dyed fabric ready</span></div><div class="hs"><b class="num">' + money(d.kpis.shippedValue) + '</b><span>Shipped to date</span></div><div class="hs"><b class="num">' + num(d.kpis.dyeingKg) + ' kg</b><span>On dye machines</span></div></div></div>' +
-    '<div class="kpi-row">' + kpis + '</div>' +
+    '<div class="card hero mb"><h2>' + hello + ', ' + esc(state.user.name.split(' ')[0]) + ' — here is your factory, end to end.</h2><p>Follow an order left to right: buyer PO → yarn & trims → dye house → knitting & sewing → QC & packing → shipped & paid.</p>' +
+    '<div class="h-stats"><div class="hs"><b class="num">' + money(d.kpis.activeValue) + '</b><span>Order book</span></div><div class="hs"><b class="num">' + num(d.kpis.dyedReadyKg) + ' kg</b><span>Dyed fabric ready</span></div><div class="hs"><b class="num">' + money(d.kpis.shippedValue) + '</b><span>Shipped to date</span></div><div class="hs"><b class="num">' + money(d.kpis.receivable) + '</b><span>To collect</span></div></div></div>' +
+    '<div class="card mb"><div class="card-head"><span class="card-title">The flow — every order, stage by stage</span><span class="right mini">click any stage to open it</span></div>' + flowHtml + '</div>' +
     '<div class="grid g-main">' +
-      '<div>' +
-        '<div class="card mb"><div class="card-head"><span class="card-title">Order pipeline — merchandising to delivery</span></div>' + pipe + '</div>' +
-        '<div class="grid g-2">' +
-          '<div class="card"><div class="card-head"><span class="card-title">Orders by stage</span></div>' + donut + '</div>' +
-          '<div class="card"><div class="card-head"><span class="card-title">Shipments per month</span><span class="right mini">by ETD</span></div>' + bars + '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div>' +
-        '<div class="card mb"><div class="card-head"><span class="card-title">Needs attention</span></div>' + (tasks + due || '<div class="empty">Nothing pending — rare and beautiful.</div>') + '</div>' +
-        '<div class="card"><div class="card-head"><span class="card-title">Stock alerts</span><span class="right"><button class="linklike" data-go="#/inventory">Open store ' + ICONS.arrow + '</button></span></div>' +
-        (d.lowStockList.length ? d.lowStockList.map(mm =>
-          '<div class="alert-item"><div style="min-width:130px"><b>' + esc(mm.code) + '</b><div class="mini">' + esc(mm.name) + '</div></div><div class="ai-bar"><i style="width:' + Math.min(100, mm.stock / mm.reorder * 100) + '%"></i></div><span class="mini b num" style="min-width:86px;text-align:right">' + num(mm.stock) + ' / ' + num(mm.reorder) + '</span></div>'
-        ).join('') : '<div class="empty">All materials above reorder levels.</div>') + '</div>' +
-      '</div>' +
+      '<div class="card"><div class="card-head"><span class="card-title">Needs attention today</span></div>' + (tasks + due || '<div class="empty">Nothing pending — rare and beautiful.</div>') + '</div>' +
+      '<div class="card"><div class="card-head"><span class="card-title">Stock alerts — mill inputs</span><span class="right"><button class="linklike" data-go="#/inventory">Open store ' + ICONS.arrow + '</button></span></div>' +
+      (d.lowStockList.length ? d.lowStockList.map(mm =>
+        '<div class="alert-item"><div style="min-width:130px"><b>' + esc(mm.code) + '</b><div class="mini">' + esc(mm.name) + '</div></div><div class="ai-bar"><i style="width:' + Math.min(100, mm.stock / mm.reorder * 100) + '%"></i></div><span class="mini b num" style="min-width:86px;text-align:right">' + num(mm.stock) + ' / ' + num(mm.reorder) + '</span></div>'
+      ).join('') : '<div class="empty">All yarn, dyes & trims above reorder levels.</div>') + '</div>' +
     '</div>' +
-    '<div class="card mt"><div class="card-head"><span class="card-title">Live activity — all departments</span><span class="right"><button class="linklike" data-go="#/activity">Full thread ' + ICONS.arrow + '</button></span></div>' + d.recentActivity.map(a => feedItem(a, true)).join('') + '</div>';
+    '<div class="card mt mb"><div class="card-head"><span class="card-title">Open a department</span><span class="right mini">everyone under one roof</span></div>' + tilesHtml + '</div>' +
+    '<div class="card"><div class="card-head"><span class="card-title">Live activity — all departments</span><span class="right"><button class="linklike" data-go="#/activity">Full thread ' + ICONS.arrow + '</button></span></div>' + d.recentActivity.map(a => feedItem(a, true)).join('') + '</div>';
 
   view.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => { location.hash = el.dataset.go; }));
 }
