@@ -153,14 +153,14 @@ appjs = appjs.replace(old_rep, new_rep)
 # prominent version badge on the sign-in card
 appjs = appjs.replace(
   "'<h2>Sign in</h2><div class=\"sub\">One workspace for the whole company.</div>' +",
-  "'<h2 style=\"display:flex;align-items:center;gap:10px\">Sign in <span style=\"font-size:11px;letter-spacing:.5px;background:#d1fae5;color:#047857;border:1px solid #6ee7b7;padding:4px 12px;border-radius:99px\">v7 ✓ CORRECT FILE</span></h2><div class=\"sub\">One workspace for the whole company.</div>' +"
+  "'<h2 style=\"display:flex;align-items:center;gap:10px\">Sign in <span style=\"font-size:11px;letter-spacing:.5px;background:#d1fae5;color:#047857;border:1px solid #6ee7b7;padding:4px 12px;border-radius:99px\">v8 ✓ CORRECT FILE</span></h2><div class=\"sub\">One workspace for the whole company.</div>' +"
 )
-assert 'v7 ✓ CORRECT FILE' in appjs
+assert 'v8 ✓ CORRECT FILE' in appjs
 
 # portable footer + reset button
 appjs = appjs.replace('Demo environment', 'Portable edition')
 appjs = appjs.replace("all changes persist in the workspace database.", 'changes save in this browser. <button class="linklike" id="reset-db" type="button">Reset demo data</button>')
-appjs = appjs.replace('Reset demo data</button>', 'Reset demo data</button> · <b>v7</b>')
+appjs = appjs.replace('Reset demo data</button>', 'Reset demo data</button> · <b>v8</b>')
 old_od = """  const od = $('#open-demo');
   if (od) od.addEventListener('click', () => quickLogin('admin@knitflow.io'));"""
 new_od = old_od + """
@@ -207,7 +207,7 @@ setTimeout(function () {
   if (r && r.querySelector(".boot")) {
     r.innerHTML = "<div style='max-width:540px;margin:14vh auto;padding:30px;font-family:Arial,sans-serif;background:#fff;border:1px solid #e2e8f0;border-radius:14px;text-align:center;box-shadow:0 4px 16px rgba(15,23,42,.06)'>"
       + "<div style='font-size:34px'>🧶</div><h2 style='margin:10px 0 8px'>This is an older copy of KnitFlow</h2>"
-      + "<p style='color:#64748b;font-size:14px;line-height:1.6'>The app could not start because this downloaded file is outdated.<br>Delete it and use the newest <b>knitflow-app.html</b> —<br>the correct one shows <b>v7</b> at the bottom of the sign-in card.</p>"
+      + "<p style='color:#64748b;font-size:14px;line-height:1.6'>The app could not start because this downloaded file is outdated.<br>Delete it and use the newest <b>knitflow-app.html</b> —<br>the correct one shows <b>v8</b> at the bottom of the sign-in card.</p>"
       + "<button onclick='location.reload()' style='padding:11px 20px;border:0;border-radius:10px;background:#4F46E5;color:#fff;font-size:14px;font-weight:700'>Reload</button></div>";
   }
 }, 2500);

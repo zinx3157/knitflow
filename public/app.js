@@ -96,6 +96,14 @@ function openModal({ title, body, wide, onSubmit, submitText }) {
 }
 function closeModal() { modalRoot.innerHTML = ''; }
 
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-wopen]');
+  if (!t) return;
+  state.wikiDoc = t.dataset.wopen;
+  if (state.view !== 'wiki') location.hash = 'wiki';
+  else route();
+});
+
 /* ---------------- icons ---------------- */
 
 const ICONS = {
@@ -124,7 +132,8 @@ const ICONS = {
   cart: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 4h2l2.6 11.5a1.5 1.5 0 0 0 1.5 1.2h7.6a1.5 1.5 0 0 0 1.5-1.2L20 8H6"/></svg>',
   ship: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V9l4-3 4 3v8M11 17v-6l4-3 4 3v6M2 20h20"/></svg>',
   users: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M16 15.2c2.3.2 4 1.6 4.5 4.3"/></svg>',
-  menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'
+  menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+  wiki: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>'
 };
 
 /* ---------------- auth ---------------- */
@@ -248,11 +257,12 @@ function renderShell() {
       { id: 'quality', icon: 'quality', text: 'Quality Control' } ] },
     { key: 'dispatch', label: 'Dispatch', icon: 'shipping', direct: 'shipping', views: 'shipping', items: [
       { id: 'shipping', icon: 'shipping', text: 'Shipping' } ] },
-    { key: 'company', label: 'Company', icon: 'finance', views: 'finance,hr,reports,directory,settings', items: [
+    { key: 'company', label: 'Company', icon: 'finance', views: 'finance,hr,reports,directory,settings,wiki', items: [
       { id: 'finance', icon: 'finance', text: 'Finance & Costing' },
       { id: 'hr', icon: 'hr', text: 'HR & Payroll' },
       { id: 'reports', icon: 'reports', text: 'Reports Center' },
       { id: 'directory', icon: 'directory', text: 'Company Hub' },
+      { id: 'wiki', icon: 'wiki', text: 'Wiki — SOPs & Specs' },
       { id: 'settings', icon: 'settings', text: 'Settings' } ] }
   ];
   window.KF_DOCK = DOCK;
@@ -358,7 +368,8 @@ async function route() {
     reports: ['Reports Center', 'Printable management reports — every department'],
     directory: ['Company Hub', 'Departments, team, buyers, suppliers & company profile'],
     settings: ['Settings', 'Company profile, users & access'],
-    activity: ['Activity Thread', 'Every department, every move — one live feed']
+    activity: ['Activity Thread', 'Every department, every move — one live feed'],
+    wiki: ['Wiki', 'SOPs, tech sheets & packing instructions — the factory playbook']
   };
   const t = titles[state.view] || ['KnitFlow', ''];
   setTitle(t[0], state.arg ? 'Order ' + state.arg : t[1]);
@@ -384,6 +395,7 @@ async function route() {
     else if (state.view === 'hr') await viewHR(view);
     else if (state.view === 'finance') await viewFinance(view);
     else if (state.view === 'reports') await viewReports(view);
+    else if (state.view === 'wiki') await viewWiki(view);
     else if (state.view === 'settings') await viewSettings(view);
     else view.innerHTML = '<div class="card">Page not found.</div>';
   } catch (e) { view.innerHTML = '<div class="card" style="color:var(--red)">' + esc(e.message) + '</div>'; }
@@ -645,6 +657,11 @@ async function viewOrderDetail(view, id) {
       '<tr><td class="mini"><b>Profit</b></td><td class="r num"><b style="color:var(--green)">' + money(cc.profit) + '</b></td></tr>' +
       '</tbody></table></div>');
   }
+  try {
+    const wd = await api('/wiki');
+    const rel = wd.docs.filter(x => x.linkOrder === o.id);
+    if (rel.length) extraCards.push('<div class="card"><div class="card-head"><span class="card-title">Wiki — specs & instructions</span></div>' + rel.map(x => '<div style="display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #e2e8f0"><span class="pill ' + (WIKI_TYPES[x.type] || WIKI_TYPES.SOP).pill + '">' + (WIKI_TYPES[x.type] || WIKI_TYPES.SOP).tag + '</span><button data-wopen="' + esc(x.id) + '" style="cursor:pointer;background:none;border:none;padding:0;color:#2563eb;font-size:13px">' + esc(x.title) + '</button><span class="mini" style="margin-left:auto">v' + x.version + '</span></div>').join('') + '</div>');
+  } catch (e) {}
   const extraHtml = extraCards.length ? '<div class="grid g-2 mt">' + extraCards.join('') + '</div>' : '';
 
   // contextual actions
@@ -1110,6 +1127,122 @@ async function viewInventory(view) {
 }
 
 /* ---------------- directory ---------------- */
+
+/* ---------------- Wiki — SOPs, tech sheets & packing instructions ---------------- */
+
+const WIKI_TYPES = {
+  SOP: { color: '#2563eb', pill: 'p-blue', tag: 'SOP', label: 'Standard operating procedure' },
+  TECH: { color: '#059669', pill: 'p-green', tag: 'TECH SHEET', label: 'Tech sheet' },
+  PACK: { color: '#d97706', pill: 'p-amber', tag: 'PACKING', label: 'Packing instruction' }
+};
+
+function wikiSectionsHtml(doc) {
+  return (doc.sections || []).map(s => '<h4 style="margin:18px 0 6px;font-size:13.5px">' + esc(s.h) + '</h4><p style="margin:0;color:#334155;font-size:13.5px;line-height:1.65;white-space:pre-wrap">' + esc(s.body) + '</p>').join('');
+}
+
+async function viewWiki(view) {
+  const { docs } = await api('/wiki');
+  if (!state.wikiTab) state.wikiTab = 'All';
+  if (state.wikiQ === undefined) state.wikiQ = '';
+  const open = state.wikiDoc ? docs.find(x => x.id === state.wikiDoc) : null;
+
+  if (open) {
+    const wt = WIKI_TYPES[open.type] || WIKI_TYPES.SOP;
+    const specs = (open.specs || []).length ? '<h4 style="margin:18px 0 0">Specifications</h4><table class="tbl" style="margin-top:8px"><tbody>' + open.specs.map(r => '<tr><td class="mini" style="width:190px">' + esc(r[0]) + '</td><td><b>' + esc(r[1]) + '</b></td></tr>').join('') + '</tbody></table>' : '';
+    const poms = (open.poms || []).length ? '<h4 style="margin:18px 0 0">Measurements (POM)</h4><table class="tbl" style="margin-top:8px"><thead><tr>' + open.poms[0].map(h => '<th>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + open.poms.slice(1).map(r => '<tr>' + r.map((c, i) => '<td' + (i ? ' class="num"' : '') + '>' + esc(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table>' : '';
+    const carton = (open.carton || []).length ? '<h4 style="margin:18px 0 0">Carton & packing data</h4><table class="tbl" style="margin-top:8px"><tbody>' + open.carton.map(r => '<tr><td class="mini" style="width:190px">' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td></tr>').join('') + '</tbody></table>' : '';
+    const tags = (open.tags || []).length ? '<div style="margin-top:10px">' + open.tags.map(t => '<span class="mini" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:99px;padding:3px 10px;margin-right:6px">' + esc(t) + '</span>').join('') + '</div>' : '';
+    view.innerHTML =
+      '<button class="btn sm" id="wiki-back">' + ICONS.arrow + ' All documents</button>' +
+      '<div class="card" style="margin-top:12px;border-top:4px solid ' + wt.color + '">' +
+        '<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><span class="pill ' + wt.pill + '">' + wt.tag + '</span><b style="font-size:16px">' + esc(open.title) + '</b><span style="margin-left:auto"></span><button class="btn sm" id="wiki-edit">' + ICONS.doc + ' Edit</button></div>' +
+        '<div class="mini" style="margin-top:7px">' + esc(open.dept) + ' · owner <b>' + esc(open.owner) + '</b> · version ' + open.version + ' · updated ' + fmtDate(open.updated) + ' · <span class="pill p-green">' + esc(open.status) + '</span>' + (open.linkOrder ? ' · order <a href="#orders/' + esc(open.linkOrder) + '" style="color:#2563eb"><b>' + esc(open.linkOrder) + '</b></a>' : '') + '</div>' +
+        tags + specs + poms + carton + wikiSectionsHtml(open) +
+      '</div>';
+    $('#wiki-back').addEventListener('click', () => { state.wikiDoc = null; viewWiki(view); });
+    $('#wiki-edit').addEventListener('click', () => wikiModal(open));
+    return;
+  }
+
+  const byType = t => docs.filter(d => d.type === t).length;
+  const cards = docs.map(d => {
+    const wt = WIKI_TYPES[d.type] || WIKI_TYPES.SOP;
+    const snip = (((d.sections || [])[0] || {}).body || '').slice(0, 130);
+    return '<div class="card" data-wopen="' + esc(d.id) + '" data-wtype="' + d.type + '" data-wsearch="' + esc((d.title + ' ' + (d.tags || []).join(' ') + ' ' + d.dept).toLowerCase()) + '" style="border-left:4px solid ' + wt.color + ';cursor:pointer">' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="pill ' + wt.pill + '">' + wt.tag + '</span><b>' + esc(d.title) + '</b><span class="mini" style="margin-left:auto">v' + d.version + ' · ' + fmtDate(d.updated) + '</span></div>' +
+      '<div class="mini" style="margin:7px 0 3px;color:#475569">' + esc(snip) + (snip.length >= 130 ? '…' : '') + '</div>' +
+      '<div class="mini">' + esc(d.dept) + ' · ' + esc(d.owner) + '</div></div>';
+  }).join('');
+
+  view.innerHTML =
+    '<div class="toolbar"><div class="summary-chips">' +
+      '<span class="s-chip"><b class="num">' + docs.length + '</b><span>documents</span></span>' +
+      '<span class="s-chip"><b class="num">' + byType('SOP') + '</b><span>SOPs — how we run</span></span>' +
+      '<span class="s-chip"><b class="num">' + byType('TECH') + '</b><span>tech sheets — how styles are built</span></span>' +
+      '<span class="s-chip"><b class="num">' + byType('PACK') + '</b><span>packing — how it ships</span></span>' +
+    '</div><span class="spacer"></span><button class="btn primary" id="new-wikidoc">' + ICONS.plus + ' New document</button></div>' +
+    '<div class="toolbar"><div class="tabs">' +
+    ['All', 'SOP', 'TECH', 'PACK'].map(t => '<button class="tab ' + (state.wikiTab === t ? 'active' : '') + '" data-wtab="' + t + '">' + (t === 'All' ? 'All (' + docs.length + ')' : t === 'SOP' ? ICONS.doc + ' SOPs (' + byType('SOP') + ')' : t === 'TECH' ? ICONS.wiki + ' Tech sheets (' + byType('TECH') + ')' : ICONS.package + ' Packing (' + byType('PACK') + ')') + '</button>').join('') +
+    '</div><input id="wiki-q" class="btn" style="padding:8px 12px;min-width:230px" placeholder="Search title, tag or department…" value="' + esc(state.wikiQ) + '"></div>' +
+    '<div class="hint" style="margin-bottom:12px">' + ICONS.wiki + ' <b>SOP</b> = how we work · <b>Tech sheet</b> = how a style is built · <b>Packing</b> = how it ships. Click any card to read it — everyone can edit.</div>' +
+    '<div class="grid g-2" id="wiki-cards">' + cards + '</div>';
+
+  view.querySelectorAll('[data-wtab]').forEach(t => t.addEventListener('click', () => { state.wikiTab = t.dataset.wtab; viewWiki(view); }));
+  view.querySelectorAll('#wiki-cards [data-wopen]').forEach(c => c.addEventListener('click', () => { state.wikiDoc = c.dataset.wopen; viewWiki(view); }));
+  const q = $('#wiki-q');
+  if (q) q.addEventListener('input', e => {
+    state.wikiQ = e.target.value;
+    const term = e.target.value.toLowerCase();
+    view.querySelectorAll('#wiki-cards [data-wopen]').forEach(c => {
+      const okTab = state.wikiTab === 'All' || c.dataset.wtype === state.wikiTab;
+      c.style.display = okTab && (!term || c.dataset.wsearch.indexOf(term) >= 0) ? '' : 'none';
+    });
+  });
+  const nb = $('#new-wikidoc');
+  if (nb) nb.addEventListener('click', () => wikiModal(null));
+}
+
+async function wikiModal(doc) {
+  let orderIds = [];
+  try { const { orders } = await api('/orders'); orderIds = orders.map(o => o.id); } catch (e) {}
+  const editing = !!doc;
+  const d = doc || { type: 'SOP', title: '', dept: 'Merchandising', owner: '', tags: [], linkOrder: '', sections: [] };
+  const content = editing ? (doc.sections || []).map(s => '# ' + s.h + '\n' + s.body).join('\n\n') : '# Purpose\nDescribe why this document exists.\n\n# Steps\n1. First step\n2. Second step';
+  openModal({
+    title: editing ? 'Edit ' + doc.id + ' — will become v' + (doc.version + 1) : 'New wiki document', wide: true,
+    submitText: editing ? 'Save new version' : 'Publish to wiki',
+    body:
+      '<div class="field"><label>Document type</label><div class="tabs" id="wiki-type-tabs">' +
+      ['SOP', 'TECH', 'PACK'].map(t => '<button type="button" class="tab' + (d.type === t ? ' active' : '') + '" data-wmtype="' + t + '">' + WIKI_TYPES[t].tag + '</button>').join('') +
+      '</div><input type="hidden" name="type" id="wiki-type" value="' + d.type + '"></div>' +
+      '<div class="field"><label>Title <span class="req">*</span></label><input name="title" required value="' + esc(d.title) + '" placeholder="e.g. Packing instruction — hat boxes"></div>' +
+      '<div class="form-grid">' +
+      '<div class="field"><label>Department</label><select name="dept">' + Object.keys(DEPT_COLORS).map(x => '<option' + (d.dept === x ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Owner</label><input name="owner" value="' + esc(d.owner || '') + '" placeholder="your name"></div>' +
+      '<div class="field"><label>Tags (comma separated)</label><input name="tags" value="' + esc((d.tags || []).join(', ')) + '" placeholder="carton, sea, marks"></div>' +
+      '<div class="field"><label>Linked order (optional)</label><input name="linkOrder" list="wiki-orders-dl" value="' + esc(d.linkOrder || '') + '" placeholder="ORD-1002"><datalist id="wiki-orders-dl">' + orderIds.map(o => '<option value="' + esc(o) + '">').join('') + '</datalist></div>' +
+      '</div>' +
+      '<div class="field"><label>Content — lines starting with # become section headings</label><textarea name="content" rows="12" style="width:100%;font-family:inherit;line-height:1.55">' + esc(content) + '</textarea></div>',
+    onSubmit: async fd => {
+      const body = Object.fromEntries(fd);
+      if (editing) {
+        const x = await api('/wiki/' + doc.id, { method: 'PUT', body });
+        toast(doc.id + ' saved — now at v' + x.version);
+        state.wikiDoc = doc.id;
+      } else {
+        const x = await api('/wiki', { method: 'POST', body });
+        toast(x.id + ' published to the wiki');
+        state.wikiTab = 'All'; state.wikiQ = ''; state.wikiDoc = null;
+      }
+      route();
+    }
+  });
+  document.querySelectorAll('#wiki-type-tabs .tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('#wiki-type-tabs .tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    $('#wiki-type').value = t.dataset.wmtype;
+  }));
+}
 
 async function viewDirectory(view) {
   const [{ users }, { buyers }, { suppliers }, { settings }, hr] = await Promise.all([api('/users'), api('/buyers'), api('/suppliers'), api('/settings'), api('/hr')]);

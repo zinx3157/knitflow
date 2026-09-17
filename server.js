@@ -47,7 +47,7 @@ function seed() {
   const now = '2026-09-17T09:12:00.000Z';
   const dAgo = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
   return {
-    seq: { order: 1010, req: 9, po: 2606, batch: 2618, ship: 4506, buyer: 6, supplier: 6, act: 100, sample: 209, prod: 105, qc: 505, emp: 17, ex: 108, user: 10, bnd: 5007 },
+    seq: { order: 1010, req: 9, po: 2606, batch: 2618, ship: 4506, buyer: 6, supplier: 6, act: 100, sample: 209, prod: 105, qc: 505, emp: 17, ex: 108, user: 10, bnd: 5007, wiki: 116 },
     users: [
       { id: 'U-01', name: 'Amina Rasoanaivo', email: 'admin@knitflow.io', password: 'knit123', role: 'admin', title: 'Managing Director', dept: 'Management' },
       { id: 'U-02', name: 'Hery Andriamampianina', email: 'merch@knitflow.io', password: 'knit123', role: 'merchandising', title: 'Merchandising Manager', dept: 'Merchandising' },
@@ -235,6 +235,906 @@ function seed() {
       { id: 'CS-1003', orderId: 'ORD-1003', yarnKg: 8570, yarnRate: 2.8, dyeChemPerKg: 0.8, trimsPerPc: 0.11, cmPerPc: 1.45, overheadPct: 8, freightPerPc: 0, note: 'incl. 4 buttons/pc' },
       { id: 'CS-1004', orderId: 'ORD-1004', yarnKg: 9220, yarnRate: 12.5, dyeChemPerKg: 1.05, trimsPerPc: 0.2, cmPerPc: 3.4, overheadPct: 8, freightPerPc: 0.4, note: '' }
     ],
+    wiki: [
+  {
+    "id": "WIKI-101",
+    "type": "SOP",
+    "title": "Shipment document preparation & bank submission",
+    "dept": "Shipping",
+    "owner": "Tojo Velonjara",
+    "status": "Published",
+    "version": 4,
+    "updated": dAgo(2),
+    "tags": [
+      "export",
+      "documents",
+      "banking",
+      "SOP"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Purpose",
+        "body": "Every shipment leaves with a complete, consistent document set so the buyer clears customs without a single query."
+      },
+      {
+        "h": "Scope",
+        "body": "All export shipments from Toamasina — sea, air and courier."
+      },
+      {
+        "h": "Steps",
+        "body": "1. Check the L/C or purchase order against the final invoice value.\n2. Weigh the loaded truck at the weighbridge — packing-list weights must match within 2%.\n3. Print the packing list and commercial invoice from the shipment card (Documents buttons).\n4. Attach the transport document for the mode:\n   • Sea — Bill of lading from the forwarder (booking no. must match).\n   • Air — AWB issued by the carrier (flight no. must match).\n   • Courier — courier waybill (tracking no. must match).\n5. Collect the Certificate of Origin from the Chamber of Commerce (allow 1 working day).\n6. Submit the full set to the bank / buyer within 3 working days of gate-out."
+      },
+      {
+        "h": "Common errors",
+        "body": "Invoice value differs from L/C • carton count on packing list differs from survey report • missing HS code 6110 on courier proforma • AWB copy not endorsed."
+      },
+      {
+        "h": "KPI",
+        "body": "Documents submitted ≤ 3 working days after gate-out. Track misses in the monthly shipping report."
+      }
+    ]
+  },
+  {
+    "id": "WIKI-102",
+    "type": "SOP",
+    "title": "Dye lot approval, RFT & rework",
+    "dept": "Dye House",
+    "owner": "Tiana Rabe",
+    "status": "Published",
+    "version": 5,
+    "updated": dAgo(1),
+    "tags": [
+      "dyeing",
+      "RFT",
+      "quality",
+      "SOP"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Purpose",
+        "body": "Right-first-time dyeing. Every bulk lot must match the approved lab dip before fabric moves to cutting."
+      },
+      {
+        "h": "Approval path",
+        "body": "Lab dip (3 options) → buyer or merchandiser approval → bulk lot → QC check → fabric release."
+      },
+      {
+        "h": "Acceptance limits",
+        "body": "• ΔE ≤ 1.0 vs approved lab dip under D65 light.\n• RFT (right-first-time) target ≥ 90% per month.\n• Water ≤ 60 L per kg, power ≤ 1.2 kWh per kg, steam ≤ 5 kg per kg — record actuals in the Dye House module."
+      },
+      {
+        "h": "Rework rule",
+        "body": "One re-dye allowed after a failed QC. A second failure escalates to Merchandising + buyer for a shade band review — never re-dye twice without approval."
+      },
+      {
+        "h": "Records",
+        "body": "Batch DB-#### entries must carry the recipe, resources and QC result the same day. Dye KPIs are read from those records."
+      }
+    ]
+  },
+  {
+    "id": "WIKI-103",
+    "type": "SOP",
+    "title": "Knitting inline quality checks (4-point)",
+    "dept": "Production",
+    "owner": "Faniry Ranaivo",
+    "status": "Published",
+    "version": 2,
+    "updated": dAgo(4),
+    "tags": [
+      "knitting",
+      "QC",
+      "4-point",
+      "SOP"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Purpose",
+        "body": "Catch panel defects at the machine, not at final inspection."
+      },
+      {
+        "h": "Hourly checks",
+        "body": "• Tambour / fabric surface visual check.\n• Measurement check on a fresh panel every 2 hours against the tech sheet (see Wiki tech sheets).\n• Needle-ladder and oil-stain scan under the inspection lamp."
+      },
+      {
+        "h": "4-point system",
+        "body": "Score defects: 1 pt (< 3 cm), 2 pts (3–6 cm), 4 pts (> 9 cm). Hold the panel when it exceeds 28 points per 100 m²."
+      },
+      {
+        "h": "Stop authority",
+        "body": "Any knitter may stop a machine for a repeating defect. Log the downtime event on the Machine Board immediately — unlogged stoppages count against utilization."
+      }
+    ]
+  },
+  {
+    "id": "WIKI-104",
+    "type": "SOP",
+    "title": "Flat-knitter start-up & daily cleaning",
+    "dept": "Production",
+    "owner": "Faniry Ranaivo",
+    "status": "Published",
+    "version": 3,
+    "updated": dAgo(6),
+    "tags": [
+      "machines",
+      "Puyuan",
+      "maintenance",
+      "SOP"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Scope",
+        "body": "All flat knitters (Shenzhou + Puyuan banks), start of every shift."
+      },
+      {
+        "h": "Start-up sequence",
+        "body": "1. Blow the needle bed with compressed air — lint first, then visual.\n2. Check oil level in the carriage and top up to the sight-glass mark.\n3. Run a 20-course test swatch; verify stitch length against the tech sheet.\n4. Load the pattern file and confirm the pattern hash matches the tech pack version.\n5. Set the machine target on the Machine Board (see machine card)."
+      },
+      {
+        "h": "Shutdown",
+        "body": "Empty the needle bed, drop the take-down, wipe the carriage rail, leave the machine in 'Idle' on the board."
+      },
+      {
+        "h": "Weekly",
+        "body": "Deep-clean the yarn feeders every Monday before the shift; record as 'Maintenance' so utilization stays honest."
+      }
+    ]
+  },
+  {
+    "id": "WIKI-105",
+    "type": "SOP",
+    "title": "Bundle scan discipline on the sewing floor",
+    "dept": "Production",
+    "owner": "Faniry Ranaivo",
+    "status": "Published",
+    "version": 2,
+    "updated": dAgo(3),
+    "tags": [
+      "barcode",
+      "sewing",
+      "WIP",
+      "SOP"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Purpose",
+        "body": "The scan module is the factory's truth. If a piece is not scanned, it does not exist."
+      },
+      {
+        "h": "Rules",
+        "body": "• Scan every bundle at every operation — never skip a station.\n• Never split a bundle; the barcode stands for the full bundle quantity.\n• Over-scan is blocked at 100% of bundle quantity (error 400 by design).\n• End of day: reconcile scanned vs issued bundles; investigate every gap before the next shift."
+      },
+      {
+        "h": "Reporting",
+        "body": "Worker efficiency and floor WIP are computed from scans only. Manual counts are not accepted as corrections — fix the scan, not the report."
+      }
+    ]
+  },
+  {
+    "id": "WIKI-106",
+    "type": "SOP",
+    "title": "Sample submission workflow (proto → TOP)",
+    "dept": "Merchandising",
+    "owner": "Hery Andriamampianina",
+    "status": "Published",
+    "version": 3,
+    "updated": dAgo(5),
+    "tags": [
+      "sampling",
+      "approvals",
+      "Dalang",
+      "SOP"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Purpose",
+        "body": "Buyer approvals earned on time, in the right order, with no wasted couriers."
+      },
+      {
+        "h": "Stages",
+        "body": "Proto (7 days) → Fit (5 days) → PP sample — must be approved BEFORE bulk cutting → TOP sample travels with the shipment."
+      },
+      {
+        "h": "Internal SLA",
+        "body": "Sampling room photos + measurement sheet within 48 h of sample completion; merchandiser review same day."
+      },
+      {
+        "h": "Courier",
+        "body": "Book sample couriers through Shipping (packing instruction WIKI-114). Never put samples in personal luggage."
+      },
+      {
+        "h": "Records",
+        "body": "Log every submission and approval in the Sampling module — the buyer-facing status must always be current."
+      }
+    ]
+  },
+  {
+    "id": "WIKI-107",
+    "type": "SOP",
+    "title": "Yarn incoming inspection & shade band retention",
+    "dept": "Purchase",
+    "owner": "Niry Rakotomalala",
+    "status": "Published",
+    "version": 2,
+    "updated": dAgo(8),
+    "tags": [
+      "yarn",
+      "warehouse",
+      "inspection",
+      "SOP"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Scope",
+        "body": "Every yarn lot entering the store, before it is booked into inventory."
+      },
+      {
+        "h": "Checks",
+        "body": "• Sample 10% of cones per lot — count, lot number and cone condition.\n• Twist and count verification on the wrap wheel vs the PO spec.\n• Store humidity 60% ±5%; keep lot bands on the shade rack."
+      },
+      {
+        "h": "Retention",
+        "body": "Keep shade bands and lot labels for 2 years — they are the evidence in any buyer shade claim."
+      },
+      {
+        "h": "Mismatch",
+        "body": "Any mismatch → hold the requisition, photograph the cones, raise the supplier claim within 7 days. Never issue suspect yarn to knitting."
+      }
+    ]
+  },
+  {
+    "id": "WIKI-108",
+    "type": "TECH",
+    "title": "Tech sheet — Women's Cable Cardigan 7GG (BO/4471)",
+    "dept": "Merchandising",
+    "owner": "Hery Andriamampianina",
+    "status": "Published",
+    "version": 6,
+    "updated": dAgo(1),
+    "tags": [
+      "BO/4471",
+      "cardigan",
+      "7GG",
+      "BlueOcean"
+    ],
+    "linkOrder": "ORD-1002",
+    "sections": [
+      {
+        "h": "Construction",
+        "body": "Cable 4×4 front panels · plain back · 1×1 rib bottom, cuffs and collar. Link closing at collar — no raw edges."
+      },
+      {
+        "h": "Finishing",
+        "body": "Wash 40 °C 15 min · tumble low · steam press on the profile board. Buttonholes sewn after wash."
+      },
+      {
+        "h": "Trims",
+        "body": "5 × horn button 18 mm · main label + care label + size sticker in every polybag."
+      },
+      {
+        "h": "Packing",
+        "body": "Solid pack per WIKI-112 (20 pcs per carton, sea). Rush top-ups go by air per WIKI-113."
+      },
+      {
+        "h": "Reference",
+        "body": "Order ORD-1002 · buyer BlueOcean Apparel · 18,500 pcs · seasonal Navy / Camel / Ivory."
+      }
+    ],
+    "specs": [
+      [
+        "Gauge",
+        "7 GG flat (Shima / Puyuan)"
+      ],
+      [
+        "Yarn",
+        "30% wool · 50% acrylic · 20% nylon — Nm 2/26, 2 ends"
+      ],
+      [
+        "Unit weight",
+        "480 g"
+      ],
+      [
+        "Sizes",
+        "S–XL · ratio 1:2:2:1"
+      ],
+      [
+        "Colorways",
+        "Navy / Camel / Ivory"
+      ],
+      [
+        "Care label",
+        "EN / FR — 30 °C mild wash, dry flat"
+      ],
+      [
+        "HS code",
+        "611011"
+      ]
+    ],
+    "poms": [
+      [
+        "POM",
+        "S",
+        "M",
+        "L",
+        "XL",
+        "Tol."
+      ],
+      [
+        "Chest width (cm)",
+        "48",
+        "52",
+        "56",
+        "60",
+        "±1.0"
+      ],
+      [
+        "Body length (cm)",
+        "60",
+        "62",
+        "64",
+        "66",
+        "±1.5"
+      ],
+      [
+        "Sleeve length (cm)",
+        "57",
+        "58",
+        "59",
+        "60",
+        "±1.0"
+      ],
+      [
+        "Shoulder (cm)",
+        "38",
+        "40",
+        "42",
+        "44",
+        "±1.0"
+      ],
+      [
+        "Neck drop (cm)",
+        "8.0",
+        "8.5",
+        "9.0",
+        "9.5",
+        "±0.5"
+      ]
+    ]
+  },
+  {
+    "id": "WIKI-109",
+    "type": "TECH",
+    "title": "Tech sheet — Men's Crew Neck 5GG (NW/26/0912)",
+    "dept": "Merchandising",
+    "owner": "Hery Andriamampianina",
+    "status": "Published",
+    "version": 4,
+    "updated": dAgo(9),
+    "tags": [
+      "NW/26/0912",
+      "crew",
+      "5GG",
+      "jacquard"
+    ],
+    "linkOrder": "ORD-1001",
+    "sections": [
+      {
+        "h": "Construction",
+        "body": "Plain body with intarsia chest stripe · 1×1 rib neck, cuffs and hem · tubular finish on body."
+      },
+      {
+        "h": "Finishing",
+        "body": "Wash 40 °C · tumble low · light steam. Stripe alignment checked after wash on size M."
+      },
+      {
+        "h": "Trims",
+        "body": "Main + care label · no external logos unless the buyer portal label pack says otherwise."
+      },
+      {
+        "h": "Packing",
+        "body": "Solid pack per WIKI-112 — 620 g unit weight, 18 pcs per carton to respect the 22 kg gross limit."
+      }
+    ],
+    "specs": [
+      [
+        "Gauge",
+        "5 GG flat"
+      ],
+      [
+        "Yarn",
+        "100% combed cotton — Nm 2/30, 3 ends"
+      ],
+      [
+        "Unit weight",
+        "620 g"
+      ],
+      [
+        "Sizes",
+        "M–XXL · ratio 1:2:2:1"
+      ],
+      [
+        "Colorways",
+        "Ecru / Forest / Charcoal"
+      ],
+      [
+        "Care label",
+        "EN / FR — 30 °C wash"
+      ],
+      [
+        "HS code",
+        "611020"
+      ]
+    ],
+    "poms": [
+      [
+        "POM",
+        "M",
+        "L",
+        "XL",
+        "XXL",
+        "Tol."
+      ],
+      [
+        "Chest width (cm)",
+        "50",
+        "54",
+        "58",
+        "62",
+        "±1.0"
+      ],
+      [
+        "Body length (cm)",
+        "64",
+        "66",
+        "68",
+        "70",
+        "±1.5"
+      ],
+      [
+        "Sleeve length (cm)",
+        "59",
+        "60",
+        "61",
+        "62",
+        "±1.0"
+      ],
+      [
+        "Shoulder (cm)",
+        "42",
+        "44",
+        "46",
+        "48",
+        "±1.0"
+      ],
+      [
+        "Rib neck height (cm)",
+        "6",
+        "6",
+        "6",
+        "6",
+        "±0.5"
+      ]
+    ]
+  },
+  {
+    "id": "WIKI-110",
+    "type": "TECH",
+    "title": "Tech sheet — Baby Cardigan 12GG (KL/26/077)",
+    "dept": "Merchandising",
+    "owner": "Hery Andriamampianina",
+    "status": "Published",
+    "version": 2,
+    "updated": dAgo(7),
+    "tags": [
+      "KL/26/077",
+      "baby",
+      "12GG",
+      "compliance"
+    ],
+    "linkOrder": "ORD-1003",
+    "sections": [
+      {
+        "h": "Compliance",
+        "body": "EN 71-3 — no loose parts, nickel-free snaps, safety stitching on all trims. Compliance sign-off required before bulk."
+      },
+      {
+        "h": "Construction",
+        "body": "Fine-gauge pointelle yoke · button-through · 1×1 rib cuffs. Snap press after wash."
+      },
+      {
+        "h": "Finishing",
+        "body": "Extra-soft wash 30 °C · no tumble · steam lightly. Verify softness hand-feel against the approved keeper sample."
+      },
+      {
+        "h": "Packing",
+        "body": "Polybag with ventilation holes per baby-wear rule; solid pack per WIKI-112, 30 pcs per carton (light weight)."
+      }
+    ],
+    "specs": [
+      [
+        "Gauge",
+        "12 GG flat"
+      ],
+      [
+        "Yarn",
+        "60% cotton · 40% premium acrylic — Nm 2/48, 1 end"
+      ],
+      [
+        "Unit weight",
+        "180 g"
+      ],
+      [
+        "Sizes",
+        "6M / 12M / 18M / 24M · ratio 1:1:1:1"
+      ],
+      [
+        "Colorways",
+        "Pastel Blue / Blush / Mint"
+      ],
+      [
+        "Care label",
+        "EN / FR — 30 °C, do not tumble"
+      ],
+      [
+        "HS code",
+        "611120"
+      ]
+    ],
+    "poms": [
+      [
+        "POM",
+        "6M",
+        "12M",
+        "18M",
+        "24M",
+        "Tol."
+      ],
+      [
+        "Chest width (cm)",
+        "24",
+        "26",
+        "28",
+        "30",
+        "±0.8"
+      ],
+      [
+        "Body length (cm)",
+        "28",
+        "31",
+        "34",
+        "37",
+        "±1.0"
+      ],
+      [
+        "Sleeve length (cm)",
+        "18",
+        "21",
+        "24",
+        "27",
+        "±0.8"
+      ]
+    ]
+  },
+  {
+    "id": "WIKI-111",
+    "type": "TECH",
+    "title": "Tech sheet — Rib Beanie 3GG (BO/4472)",
+    "dept": "Merchandising",
+    "owner": "Hery Andriamampianina",
+    "status": "Published",
+    "version": 1,
+    "updated": dAgo(12),
+    "tags": [
+      "BO/4472",
+      "beanie",
+      "3GG",
+      "accessory"
+    ],
+    "linkOrder": "ORD-1004",
+    "sections": [
+      {
+        "h": "Construction",
+        "body": "2×2 rib, fold-over brim 12 cm · fully-fashioned crown with linked closing."
+      },
+      {
+        "h": "Finishing",
+        "body": "Wash 30 °C · dry flat · light steam on brim only."
+      },
+      {
+        "h": "Trims",
+        "body": "Woven flag label on brim · no hangtag (buyer decision Oct 2025)."
+      },
+      {
+        "h": "Packing",
+        "body": "Polybagged individually, 40 pcs per carton per WIKI-112; mixed colorways allowed in one carton — one size only."
+      }
+    ],
+    "specs": [
+      [
+        "Gauge",
+        "3 GG flat"
+      ],
+      [
+        "Yarn",
+        "100% lambswool — Nm 2/16, 2 ends"
+      ],
+      [
+        "Unit weight",
+        "140 g"
+      ],
+      [
+        "Sizes",
+        "One size"
+      ],
+      [
+        "Colorways",
+        "Rust / Oatmeal / Black"
+      ],
+      [
+        "Care label",
+        "EN / FR — hand wash cold"
+      ],
+      [
+        "HS code",
+        "611710"
+      ]
+    ]
+  },
+  {
+    "id": "WIKI-112",
+    "type": "PACK",
+    "title": "Packing instruction — solid export carton (sea)",
+    "dept": "Shipping",
+    "owner": "Tojo Velonjara",
+    "status": "Published",
+    "version": 5,
+    "updated": dAgo(3),
+    "tags": [
+      "carton",
+      "sea",
+      "marks",
+      "packing"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Fold method",
+        "body": "Fold to 30 × 40 cm, back panel out, in a 40 × 50 polybag with size sticker on the front-left corner."
+      },
+      {
+        "h": "Marking layout",
+        "body": "Main mark on both carton ends:\n   ANALAMANGA KNITWEAR / buyer PO no. / style no.\n   Side mark: carton no. n of N · sizes · color · quantity · gross/net kg · port of discharge.\n   STC printed under the side mark on every carton."
+      },
+      {
+        "h": "Before closing",
+        "body": "Photograph the loaded pallet rows and the closed carton face — attach to the shipment record in case of a survey query."
+      },
+      {
+        "h": "Tie-in to documents",
+        "body": "Carton list on the packing list must match the physical count exactly; weighbridge ticket within 2% of packing-list gross."
+      }
+    ],
+    "carton": [
+      [
+        "Carton",
+        "60 × 40 × 50 cm — 5-ply kraft, double wall"
+      ],
+      [
+        "Contents",
+        "20 pcs per carton · 1 pc per polybag"
+      ],
+      [
+        "Net / gross",
+        "9.6 kg / 11.2 kg — max 22 kg gross"
+      ],
+      [
+        "Container",
+        "400 ctns ≈ 48 CBM in 1 × 40HC"
+      ],
+      [
+        "Sealing",
+        "H-taping 48 mm PP + 2 × PET strapping"
+      ],
+      [
+        "Cushioning",
+        "Silica gel 2 × 10 g per carton"
+      ]
+    ]
+  },
+  {
+    "id": "WIKI-113",
+    "type": "PACK",
+    "title": "Packing instruction — air freight rush (AWB shipments)",
+    "dept": "Shipping",
+    "owner": "Tojo Velonjara",
+    "status": "Published",
+    "version": 3,
+    "updated": dAgo(2),
+    "tags": [
+      "air",
+      "AWB",
+      "rush",
+      "packing"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "When to use",
+        "body": "Buyer launch deadlines, missed vessel cut-offs, or TOP samples with a hard review date. Freight cost is ~6–8× sea — merchandiser approval is mandatory before booking."
+      },
+      {
+        "h": "Carton rule",
+        "body": "5-ply light carton, max 15 kg gross, 10 pcs of cardigans per carton typical. Chargeable weight = max(actual, volume × 167 kg/m³) — report dims to the forwarder."
+      },
+      {
+        "h": "Labels",
+        "body": "'AIR CARGO' labels on two sides + AWB pouch on piece 1 of the AWB. No strapping — airports reject strapped cartons at screening."
+      },
+      {
+        "h": "Documents",
+        "body": "Commercial invoice 3 copies + packing list inside the pouch; AWB number must match the shipment card exactly."
+      },
+      {
+        "h": "Worked example",
+        "body": "SH-4504 — 22 cartons / 360 kg on ET852 TNR→CDG, AWB 071-88234761: rush 1,200 pcs of WIKI-108 for BlueOcean's Paris launch."
+      }
+    ],
+    "carton": [
+      [
+        "Carton",
+        "55 × 38 × 38 cm — 5-ply light"
+      ],
+      [
+        "Contents",
+        "10 pcs per carton (7GG cardigans)"
+      ],
+      [
+        "Net / gross",
+        "4.8 kg / 6.1 kg — max 15 kg gross"
+      ],
+      [
+        "Chargeable weight",
+        "max(actual kg, CBM × 167)"
+      ],
+      [
+        "Sealing",
+        "Taping only — no PET strapping"
+      ],
+      [
+        "Labels",
+        "AIR CARGO ×2 + AWB pouch on piece 1"
+      ]
+    ]
+  },
+  {
+    "id": "WIKI-114",
+    "type": "PACK",
+    "title": "Packing instruction — courier samples & documents (DHL)",
+    "dept": "Shipping",
+    "owner": "Tojo Velonjara",
+    "status": "Published",
+    "version": 4,
+    "updated": dAgo(4),
+    "tags": [
+      "courier",
+      "samples",
+      "DHL",
+      "packing"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Contents",
+        "body": "TOP / fit samples + full shipping doc set (invoice, packing list, COO copy). One package per destination — never mix buyers."
+      },
+      {
+        "h": "Deface rule",
+        "body": "Mark samples 'SAMPLE — NOT FOR SALE' on the sleeve mark; unstamped samples get customs-valued at retail and the buyer pays duty twice."
+      },
+      {
+        "h": "Waybill",
+        "body": "HS code 6110 · incoterm DAP · declared value = cost only. Receiver phone number is mandatory or DHL holds the piece."
+      },
+      {
+        "h": "Cut-off",
+        "body": "TNR pickup 15:00 — book before 13:00. Post the tracking number in the activity thread the moment the label prints."
+      },
+      {
+        "h": "Worked example",
+        "body": "SH-4505 — ORD-1001 TOP samples + documents, DHL tracking JD014600003812345678, TNR → London LHR."
+      }
+    ],
+    "carton": [
+      [
+        "Package",
+        "Courier satchel or 30 × 25 × 15 box"
+      ],
+      [
+        "Contents",
+        "Samples + document set — one buyer per package"
+      ],
+      [
+        "Weight",
+        "SH-4505 example: 4 kg — max 10 kg per piece"
+      ],
+      [
+        "Pouch",
+        "Waybill + proforma invoice ×3 outside the box"
+      ],
+      [
+        "Marking",
+        "SAMPLE — NOT FOR SALE on each sample"
+      ],
+      [
+        "Cut-off",
+        "TNR pickup 15:00 — book by 13:00"
+      ]
+    ]
+  },
+  {
+    "id": "WIKI-115",
+    "type": "PACK",
+    "title": "Packing instruction — assorted size-ratio pack (1:2:2:1)",
+    "dept": "Shipping",
+    "owner": "Tojo Velonjara",
+    "status": "Published",
+    "version": 2,
+    "updated": dAgo(10),
+    "tags": [
+      "ratio",
+      "assortment",
+      "packing"
+    ],
+    "linkOrder": null,
+    "sections": [
+      {
+        "h": "Ratio math",
+        "body": "20 pcs per carton = 2 S + 8 M + 8 L + 2 XL. Scale to 10-pc cartons as 1 S + 4 M + 4 L + 1 XL."
+      },
+      {
+        "h": "Rule",
+        "body": "One colorway per carton unless the buyer portal marks the PO 'solid colour assorted size'. When in doubt — ask Merchandising before closing the carton."
+      },
+      {
+        "h": "Labels",
+        "body": "Buyer-portal barcode on every polybag + carton-content label showing the size breakdown (2-8-8-2) on the side mark."
+      },
+      {
+        "h": "Verification",
+        "body": "CC the size grid photo to merchandising for the first 5 cartons of every new PO."
+      }
+    ],
+    "carton": [
+      [
+        "Carton",
+        "Standard 60 × 40 × 50 per WIKI-112"
+      ],
+      [
+        "Contents",
+        "20 pcs = 2 S + 8 M + 8 L + 2 XL"
+      ],
+      [
+        "Polybags",
+        "Buyer-portal barcode label on every bag"
+      ],
+      [
+        "Side mark",
+        "Size breakdown 2-8-8-2 printed under the side mark"
+      ],
+      [
+        "Colorway",
+        "One per carton unless PO says assorted"
+      ]
+    ]
+  }
+],
     sessions: {},
     settings: {
       dyeStd: { waterLPkg: 60, powerKwhPkg: 1.2, steamKgPkg: 5 },
@@ -870,6 +1770,16 @@ async function apiRoute(req, res, p) {
     return json(res, 200, b);
   }
 
+function parseContent(txt) {
+  const out = []; let cur = null;
+  for (const ln of String(txt).split(/\r?\n/)) {
+    if (ln.startsWith('# ')) { cur = { h: ln.slice(2).trim(), body: '' }; out.push(cur); }
+    else if (cur) cur.body += (cur.body ? '\n' : '') + ln;
+    else if (ln.trim()) { cur = { h: 'Notes', body: ln }; out.push(cur); }
+  }
+  return out.filter(x => x.h || x.body);
+}
+
   // ---- shipments
   if (method === 'GET' && p === '/api/shipments') {
     const ships = db.shipments.map(s => {
@@ -932,6 +1842,46 @@ async function apiRoute(req, res, p) {
     if (!html) return json(res, 404, { error: 'Shipment not found' });
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     return res.end(html);
+  }
+
+  // ---- wiki (SOPs, tech sheets, packing instructions) — everyone reads, everyone improves
+  if (method === 'GET' && p === '/api/wiki') {
+    return json(res, 200, { docs: db.wiki });
+  }
+  if (method === 'POST' && p === '/api/wiki') {
+    const b = await readBody(req);
+    if (!b.title || !String(b.title).trim()) return json(res, 400, { error: 'Title is required' });
+    const type = ['SOP', 'TECH', 'PACK'].includes(b.type) ? b.type : 'SOP';
+    const doc = {
+      id: 'WIKI-' + (db.seq.wiki++), type,
+      title: String(b.title).trim(), dept: b.dept || 'Management', owner: b.owner || user.name,
+      status: 'Published', version: 1, updated: new Date().toISOString().slice(0, 10),
+      tags: String(b.tags || '').split(',').map(x => x.trim()).filter(Boolean),
+      linkOrder: b.linkOrder || null,
+      specs: [], poms: [], carton: [],
+      sections: parseContent(b.content || '')
+    };
+    db.wiki.unshift(doc);
+    log('Management', user.name, 'Published wiki doc ' + doc.id + ' — ' + doc.title, 'wiki', doc.id);
+    save();
+    return json(res, 201, doc);
+  }
+  if (method === 'PUT' && (m = p.match(/^\/api\/wiki\/([\w-]+)$/))) {
+    const doc = db.wiki.find(x => x.id === m[1]);
+    if (!doc) return json(res, 404, { error: 'Doc not found' });
+    const b = await readBody(req);
+    if (b.title && String(b.title).trim()) doc.title = String(b.title).trim();
+    if (['SOP', 'TECH', 'PACK'].includes(b.type)) doc.type = b.type;
+    if (b.dept) doc.dept = b.dept;
+    if (b.owner) doc.owner = b.owner;
+    if (b.tags !== undefined) doc.tags = String(b.tags).split(',').map(x => x.trim()).filter(Boolean);
+    if (b.linkOrder !== undefined) doc.linkOrder = b.linkOrder || null;
+    if (b.content) doc.sections = parseContent(b.content);
+    doc.version = (doc.version || 1) + 1;
+    doc.updated = new Date().toISOString().slice(0, 10);
+    log(doc.dept, user.name, 'Updated wiki doc ' + doc.id + ' — ' + doc.title + ' → v' + doc.version, 'wiki', doc.id);
+    save();
+    return json(res, 200, doc);
   }
 
   // ---- samples
