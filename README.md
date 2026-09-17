@@ -83,8 +83,8 @@ git remote add origin https://github.com/YOUR-USERNAME/knitflow.git
 git push -u origin main
 ```
 
-**Free hosting:** the `github-pages/index.html` file is the whole app in one page — enable
+**Free hosting:** the `docs/index.html` file is the whole app in one page — enable
 GitHub Pages (Settings → Pages) and your ERP gets a public URL like
-`https://YOUR-USERNAME.github.io/knitflow/github-pages/index.html`.
+`https://YOUR-USERNAME.github.io/knitflow/docs/index.html`.
 
 To rebuild the portable file after changing the code: `python3 build_standalone.py`.
