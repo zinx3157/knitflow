@@ -216,7 +216,7 @@ setTimeout(function () {
 </html>
 """
 
-out = os.path.join(BASE, 'github-pages', 'index.html')
+out = os.path.join(BASE, 'docs', 'index.html')
 io.open(out, 'w', encoding='utf-8').write(html)
 print('built', out, len(html), 'bytes')
 

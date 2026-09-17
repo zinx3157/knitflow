@@ -360,3 +360,22 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .kanban { grid-template-columns: 1fr 1fr; }
   .page { padding: 6px 14px 40px; }
 }
+
+/* ---------- factory flow & dept tiles ---------- */
+.flow-strip { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.flow-card { flex: 1; min-width: 150px; background: #f8fafc; border: 1px solid var(--line); border-top: 4px solid var(--fc, var(--primary)); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .13s; }
+.flow-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--fc); }
+.flow-top { display: flex; align-items: center; gap: 8px; }
+.flow-n { width: 20px; height: 20px; border-radius: 50%; background: var(--fc); color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; flex: none; }
+.flow-lb { font-size: 12.5px; font-weight: 800; color: var(--ink-2); }
+.flow-count { font-size: 27px; font-weight: 800; letter-spacing: -.5px; margin-top: 6px; line-height: 1.1; }
+.flow-sub { font-size: 11.5px; color: var(--mut); margin-top: 3px; }
+.flow-arrow { align-self: center; color: var(--mut-2); flex: none; display: grid; place-items: center; }
+.dept-tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.dept-tile { background: #fff; border: 1px solid var(--line); border-radius: 13px; padding: 14px; cursor: pointer; transition: all .13s; border-top: 4px solid var(--tc, var(--primary)); }
+.dept-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.dept-tile .dt-ic { width: 34px; height: 34px; border-radius: 10px; color: #fff; display: grid; place-items: center; }
+.dept-tile b { display: block; margin-top: 9px; font-size: 13px; }
+.dept-tile .mini { display: block; margin-top: 2px; }
+@media (max-width: 1180px) { .dept-tiles { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .dept-tiles { grid-template-columns: 1fr 1fr; } .flow-arrow { display: none; } }
