@@ -379,3 +379,12 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .dept-tile .mini { display: block; margin-top: 2px; }
 @media (max-width: 1180px) { .dept-tiles { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 760px) { .dept-tiles { grid-template-columns: 1fr 1fr; } .flow-arrow { display: none; } }
+
+/* ---------- machine board & scanning ---------- */
+.mono { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: 1px; }
+.scan-big { font-size: 19px !important; font-weight: 700; letter-spacing: 2px; padding: 13px 14px !important; }
+.floor-dots { display: flex; gap: 5px; }
+.fdot { width: 26px; height: 26px; border-radius: 8px; display: inline-grid; place-items: center; font-size: 11px; font-weight: 800; background: #f1f5f9; color: var(--mut-2); border: 1px solid var(--line); }
+.fdot.part { background: var(--amber-soft); color: #b45309; border-color: #fde68a; }
+.fdot.full { background: var(--green); color: #fff; border-color: var(--green); }
+.mb-tv { font-variant-numeric: tabular-nums; }

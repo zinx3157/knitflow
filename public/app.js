@@ -115,6 +115,7 @@ const ICONS = {
   doc: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>',
   arrow: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   print: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>',
+  barcode: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6v12M8 6v12M11 6v12M14 6v12M18 6v12M21 6v12"/></svg>',
   flame: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
   cart: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 4h2l2.6 11.5a1.5 1.5 0 0 0 1.5 1.2h7.6a1.5 1.5 0 0 0 1.5-1.2L20 8H6"/></svg>',
   ship: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V9l4-3 4 3v8M11 17v-6l4-3 4 3v6M2 20h20"/></svg>',
@@ -210,7 +211,9 @@ const NAV = [
   { id: 'inventory', icon: 'inventory', text: 'Yarn & Trims Store' },
   { id: 'dye', icon: 'dye', text: 'Dye House' },
   { label: 'The Factory' },
+  { id: 'machineboard', icon: 'production', text: 'Machine Board' },
   { id: 'production', icon: 'production', text: 'Production Floors' },
+  { id: 'scan', icon: 'barcode', text: 'Floor Scanning' },
   { id: 'quality', icon: 'quality', text: 'Quality Control' },
   { label: 'Dispatch' },
   { id: 'shipping', icon: 'shipping', text: 'Shipping' },
@@ -299,6 +302,8 @@ async function route() {
     sampling: ['Sampling & Development', 'Proto, fit, PP & TOP samples — buyer approvals tracked'],
     purchase: ['Purchase Department', 'Requisitions, purchase orders & suppliers'],
     dye: ['Dye House', 'Batch board — recipes, machines & QC'],
+    machineboard: ['Machine Board', 'Live machines — output, utilization & downtime'],
+    scan: ['Floor Scanning', 'Scan bundles — live WIP, piece counting & worker efficiency'],
     production: ['Production Floors', 'Knitting → cutting → sewing → finishing — WIP live'],
     quality: ['Quality Control', 'Inline & final AQL inspections — nothing ships without a pass'],
     shipping: ['Shipping Department', 'Bookings, documents & deliveries'],
@@ -327,6 +332,8 @@ async function route() {
     else if (state.view === 'activity') await viewActivity(view);
     else if (state.view === 'sampling') await viewSampling(view);
     else if (state.view === 'production') await viewProduction(view);
+    else if (state.view === 'machineboard') await viewMachineBoard(view);
+    else if (state.view === 'scan') await viewScan(view);
     else if (state.view === 'quality') await viewQuality(view);
     else if (state.view === 'hr') await viewHR(view);
     else if (state.view === 'finance') await viewFinance(view);
@@ -767,7 +774,7 @@ async function purchaseSuppliers(body, view) {
 /* ---------------- dye house ---------------- */
 
 async function viewDye(view) {
-  const [{ batches }, { orders }] = await Promise.all([api('/batches'), api('/orders')]);
+  const [{ batches, dyeSummary }, { orders }] = await Promise.all([api('/batches'), api('/orders')]);
   const actionable = can('batches');
   const cols = [
     { key: 'Queued', color: '#64748b' }, { key: 'Dyeing', color: '#8b5cf6' }, { key: 'Drying', color: '#06b6d4' },
@@ -786,10 +793,12 @@ async function viewDye(view) {
       if (BATCH_NEXT[b.status]) actions += '<button class="btn sm primary" data-adv="' + esc(b.id) + '">' + (b.status === 'Queued' ? 'Start dyeing' : 'To ' + BATCH_NEXT[b.status]) + '</button>';
       if (b.status === 'QC') actions += '<button class="btn sm green" data-pass="' + esc(b.id) + '">Pass QC</button><button class="btn sm red" data-fail="' + esc(b.id) + '">Fail</button>';
       if (b.status === 'Rework') actions += '<button class="btn sm primary" data-adv="' + esc(b.id) + '">Re-dye</button>';
+      actions += '<button class="btn sm" data-res="' + esc(b.id) + '">Usage</button>';
     }
     return '<div class="kb-card" style="--bc:' + b.hex + '">' +
       '<div class="kb-title">' + esc(b.id) + ' <span class="swatch"><i style="background:' + b.hex + '"></i>' + esc(b.color) + '</span></div>' +
-      '<div class="kb-sub">' + esc(b.orderId) + ' (' + esc(b.orderPo || '') + ')<br>' + num(b.qtyKg) + ' kg · ' + esc(b.machine) + ' · ' + esc(b.recipe || 'no recipe') + (b.reworks ? ' · rework #' + b.reworks : '') + '</div>' +
+      '<div class="kb-sub">' + esc(b.orderId) + ' (' + esc(b.orderPo || '') + ')<br>' + num(b.qtyKg) + ' kg · ' + esc(b.machine) + ' · ' + esc(b.recipe || 'no recipe') + (b.reworks ? ' · rework #' + b.reworks : '') +
+      (b.waterPerKg != null ? '<br><span style="color:' + (b.waterPerKg > (dyeSummary ? dyeSummary.std.waterLPkg : 60) * 1.15 ? '#b91c1c' : '#0f766e') + '">💧 ' + b.waterPerKg + ' L/kg · ' + b.powerPerKg + ' kWh/kg</span>' : '') + '</div>' +
       '<div class="kb-actions">' + actions + '</div></div>';
   };
 
@@ -803,6 +812,9 @@ async function viewDye(view) {
   view.innerHTML =
     '<div class="toolbar"><div class="summary-chips">' +
       '<span class="s-chip"><b class="num">' + num(totalKg) + ' kg</b><span>on the floor</span></span>' +
+      '<span class="s-chip"><b class="num" style="color:' + (dyeSummary && dyeSummary.rftPct >= 90 ? 'var(--green)' : '#b45309') + '">' + (dyeSummary ? dyeSummary.rftPct : '—') + '%</b><span>right-first-time</span></span>' +
+      '<span class="s-chip"><b class="num">' + (dyeSummary && dyeSummary.waterAvgLPkg != null ? dyeSummary.waterAvgLPkg : '—') + ' L/kg</b><span>avg water (std ' + (dyeSummary ? dyeSummary.std.waterLPkg : 60) + ')</span></span>' +
+      '<span class="s-chip"><b class="num">' + (dyeSummary && dyeSummary.powerAvgKwhPkg != null ? dyeSummary.powerAvgKwhPkg : '—') + ' kWh/kg</b><span>avg power (std ' + (dyeSummary ? dyeSummary.std.powerKwhPkg : 1.2) + ')</span></span>' +
       '<span class="s-chip"><b class="num">' + batches.filter(b => b.status === 'Passed').reduce((s, b) => s + b.qtyKg, 0).toLocaleString() + ' kg</b><span>dyed &amp; passed</span></span>' +
       '<span class="s-chip"><b class="num">' + batches.filter(b => b.status === 'Rework').length + '</b><span>in rework</span></span>' +
     '</div><span class="spacer"></span>' +
@@ -816,6 +828,26 @@ async function viewDye(view) {
   });
   on('[data-pass]', async e => { const b = await api('/batches/' + e.currentTarget.dataset.pass + '/complete', { method: 'POST', body: { pass: true } }); toast('Batch ' + b.id + ' passed QC — fabric to floor'); viewDye(view); });
   on('[data-fail]', async e => { const b = await api('/batches/' + e.currentTarget.dataset.fail + '/complete', { method: 'POST', body: { pass: false } }); toast('Batch ' + b.id + ' failed — sent to rework', 'error'); viewDye(view); });
+  view.querySelectorAll('[data-res]').forEach(b => b.addEventListener('click', () => {
+    const bt = batches.find(x => x.id === b.dataset.res);
+    const stdW = Math.round(bt.qtyKg * (dyeSummary ? dyeSummary.std.waterLPkg : 60));
+    const stdP = Math.round(bt.qtyKg * (dyeSummary ? dyeSummary.std.powerKwhPkg : 1.2));
+    openModal({
+      title: 'Resource usage — ' + bt.id, submitText: 'Save usage',
+      body: '<div class="hint">Standard for ' + num(bt.qtyKg) + ' kg: <b>' + num(stdW) + ' L water · ' + num(stdP) + ' kWh</b>. Enter what the machine actually used.</div>' +
+        '<div class="form-grid">' +
+        '<div class="field"><label>Water (L)</label><input name="waterL" type="number" min="0" value="' + (bt.resources ? bt.resources.waterL : stdW) + '"></div>' +
+        '<div class="field"><label>Electricity (kWh)</label><input name="powerKwh" type="number" min="0" step="0.1" value="' + (bt.resources ? bt.resources.powerKwh : stdP) + '"></div>' +
+        '<div class="field"><label>Steam (kg)</label><input name="steamKg" type="number" min="0" value="' + (bt.resources ? bt.resources.steamKg : Math.round(bt.qtyKg * 5)) + '"></div>' +
+        '<div class="field"><label>Dye & chemicals cost ($)</label><input name="chemCost" type="number" min="0" step="0.01" value="' + (bt.resources ? bt.resources.chemCost : Math.round(bt.qtyKg * 0.85 * 100) / 100) + '"></div>' +
+        '</div>',
+      onSubmit: async fd => {
+        await api('/batches/' + bt.id + '/resources', { method: 'PATCH', body: Object.fromEntries(fd) });
+        toast('Usage recorded — KPIs updated');
+        viewDye(view);
+      }
+    });
+  }));
   const nb = $('#new-batch');
   if (nb) nb.addEventListener('click', () => batchModal(q));
 }
@@ -1047,11 +1079,34 @@ async function viewSampling(view) {
   const editable = can('samples');
   const open = samples.filter(x => ['Requested', 'Sent', 'Comments'].includes(x.status)).length;
   const approved = samples.filter(x => x.status === 'Approved').length;
+  // Dalang-style sampling fast-lane: SLA days per sample type
+  const SLA = { 'Proto Sample': 3, 'Fit Sample': 5, 'PP Sample': 7, 'TOP Sample': 7, 'Shipment Sample': 3 };
+  const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 864e5);
+  const slaCell = sm => {
+    if (!sm.sentDate || sm.status === 'Approved') {
+      if (sm.status === 'Approved' && sm.sentDate && sm.approvedDate) {
+        const d = daysBetween(sm.sentDate, sm.approvedDate);
+        const sla = SLA[sm.type] || 5;
+        return d <= sla ? '<span class="due ok">' + d + 'd ✓</span>' : '<span class="due late">' + d + 'd late</span>';
+      }
+      return '<span class="mini">—</span>';
+    }
+    const sla = SLA[sm.type] || 5;
+    const elapsed = daysBetween(sm.sentDate, new Date().toISOString().slice(0, 10));
+    const left = sla - elapsed;
+    if (left < 0) return '<span class="due late">' + Math.abs(left) + 'd late</span>';
+    if (left <= 1) return '<span class="due warn">' + left + 'd left</span>';
+    return '<span class="due ok">' + left + 'd left</span>';
+  };
+  const lateCount = samples.filter(x => ['Sent', 'Comments'].includes(x.status) && x.sentDate && daysBetween(x.sentDate, new Date().toISOString().slice(0, 10)) > (SLA[x.type] || 5)).length;
+  const approvedOnTime = samples.filter(x => x.status === 'Approved' && x.sentDate && x.approvedDate);
+  const onTimePct = approvedOnTime.length ? Math.round(approvedOnTime.filter(x => daysBetween(x.sentDate, x.approvedDate) <= (SLA[x.type] || 5)).length / approvedOnTime.length * 100) : null;
   const rows = samples.map(sm =>
     '<tr><td><div class="cell-main">' + esc(sm.id) + '</div><div class="cell-sub">' + esc(sm.type) + '</div></td>' +
     '<td><a href="#/orders/' + esc(sm.orderId) + '" class="cell-main">' + esc(sm.orderId) + '</a><div class="cell-sub">' + esc(sm.style) + ' · ' + esc(sm.buyerName) + '</div></td>' +
     '<td>' + pill(SAMPLE_PILL, sm.status) + '</td>' +
     '<td>' + fmtDate(sm.sentDate) + '</td><td>' + fmtDate(sm.approvedDate) + '</td>' +
+    '<td>' + slaCell(sm) + '</td>' +
     '<td class="mini">' + esc(sm.note || '—') + '</td>' +
     '<td>' + (editable ? (
       sm.status === 'Approved' ? '<span class="mini">sealed ✓</span>' :
@@ -1066,10 +1121,12 @@ async function viewSampling(view) {
     '<div class="toolbar"><div class="summary-chips">' +
     '<span class="s-chip"><b class="num">' + open + '</b><span>in approval flow</span></span>' +
     '<span class="s-chip"><b class="num">' + approved + '</b><span>approved seals</span></span>' +
+    '<span class="s-chip"><b class="num" style="color:' + (onTimePct != null && onTimePct >= 80 ? 'var(--green)' : '#b45309') + '">' + (onTimePct != null ? onTimePct + '%' : '—') + '</b><span>SLA on-time rate</span></span>' +
+    '<span class="s-chip"><b class="num" style="color:' + (lateCount ? 'var(--red)' : 'var(--ink)') + '">' + lateCount + '</b><span>past SLA — chase buyer</span></span>' +
     '</div><span class="spacer"></span>' +
     (editable ? '<button class="btn primary" id="new-sample">' + ICONS.plus + ' Request sample</button>' : '') + '</div>' +
-    '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Sample</th><th>Order / Buyer</th><th>Status</th><th>Sent</th><th>Approved</th><th>Note</th><th></th></tr></thead><tbody>' +
-    (rows || '<tr><td colspan="7"><div class="empty">No samples yet.</div></td></tr>') + '</tbody></table></div></div>';
+    '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Sample</th><th>Order / Buyer</th><th>Status</th><th>Sent</th><th>Approved</th><th>SLA</th><th>Note</th><th></th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="8"><div class="empty">No samples yet.</div></td></tr>') + '</tbody></table></div></div>';
   view.querySelectorAll('[data-send]').forEach(b => b.addEventListener('click', async () => {
     await api('/samples/' + b.dataset.send, { method: 'PATCH', body: { sentDate: new Date().toISOString().slice(0, 10) } });
     toast('Sample marked as sent to buyer');
@@ -1122,7 +1179,7 @@ function logModal(prodId, floor) {
 }
 
 async function viewProduction(view) {
-  const [{ production }, { machines }] = await Promise.all([api('/production'), api('/machines')]);
+  const [{ production, capacity }, { machines }, { orders }] = await Promise.all([api('/production'), api('/machines'), api('/orders')]);
   const editable = can('production');
   const open = production.filter(p => p.status !== 'Done');
   const done = production.filter(p => p.status === 'Done');
@@ -1157,7 +1214,17 @@ async function viewProduction(view) {
     '<span class="s-chip"><b class="num">' + num(pcsToday) + '</b><span>pcs logged today</span></span>' +
     '<span class="s-chip"><b class="num">' + runningKnit + '/' + knitting.length + '</b><span>knit machines running</span></span>' +
     '</div><span class="spacer"></span>' +
-    (editable ? '<button class="btn primary" id="new-prod">' + ICONS.plus + ' Open production order</button>' : '') + '</div>' +
+    (editable ? '<button class="btn" id="make-bundles">' + ICONS.barcode + ' Create scan bundles</button> <button class="btn primary" id="new-prod">' + ICONS.plus + ' Open production order</button>' : '') + '</div>' +
+    '<div class="card mb"><div class="card-head"><span class="card-title">Knitting capacity planner</span><span class="right mini">machine-hours booked vs available</span></div>' +
+    '<div class="summary-chips">' +
+    '<span class="s-chip"><b class="num">' + (capacity ? capacity.machines : '—') + '</b><span>knit machines</span></span>' +
+    '<span class="s-chip"><b class="num">' + (capacity ? num(capacity.availableHoursWeek) : '—') + ' h</b><span>available / week</span></span>' +
+    '<span class="s-chip"><b class="num">' + (capacity ? num(capacity.bookedHours) : '—') + ' h</b><span>booked by open orders</span></span>' +
+    '<span class="s-chip"><b class="num" style="color:' + (capacity && capacity.weeklyLoadPct > 85 ? 'var(--red)' : capacity && capacity.weeklyLoadPct > 65 ? '#b45309' : 'var(--green)') + '">' + (capacity ? capacity.weeklyLoadPct : '—') + '%</b><span>load on week 1 capacity</span></span>' +
+    '<span class="s-chip"><b class="num">' + (capacity ? capacity.weeksToClear : '—') + ' wks</b><span>to clear the backlog</span></span>' +
+    '</div>' +
+    (capacity ? '<div class="inv-bar" style="height:10px;margin-top:10px"><i style="width:' + capacity.weeklyLoadPct + '%;background:' + (capacity.weeklyLoadPct > 85 ? 'var(--red)' : capacity.weeklyLoadPct > 65 ? 'var(--amber)' : 'var(--green)') + '"></i></div>' : '') +
+    '</div>' +
     '<div class="grid g-2">' + (open.map(card).join('') || '<div class="card empty">No production running — open a production order from a Fabric Ready / Production order.</div>') + '</div>' +
     (done.length ? '<h3 style="margin:18px 0 10px;font-size:14px;color:var(--mut)">Completed</h3><div class="grid g-2">' + done.map(card).join('') + '</div>' : '') +
     '<h3 style="margin:22px 0 10px;font-size:14px;color:var(--mut)">Knitting machine registry</h3><div class="mach-grid">' + machCards + '</div>';
@@ -1175,12 +1242,174 @@ async function viewProduction(view) {
     toast('Machine → ' + sel.value);
     viewProduction(view);
   }));
+  const mb = $('#make-bundles');
+  if (mb) mb.addEventListener('click', () => bundlesModal(orders));
   const nb = $('#new-prod');
   if (nb) nb.addEventListener('click', async () => {
-    const { orders } = await api('/orders');
-    const usable = orders.filter(o => ['Fabric Ready', 'Production', 'Packing'].includes(o.stage));
+    const { orders: fresh } = await api('/orders');
+    const usable = fresh.filter(o => ['Fabric Ready', 'Production', 'Packing'].includes(o.stage));
     if (!usable.length) return toast('No orders ready for production', 'error');
     productionOpenModal(usable);
+  });
+}
+
+/* ---------- bundles & scan station ---------- */
+
+function bundlesModal(orders) {
+  const usable = orders.filter(o => ['Fabric Ready', 'Production', 'Packing'].includes(o.stage));
+  if (!usable.length) return toast('No orders in production to bundle', 'error');
+  openModal({
+    title: 'Create scan bundles', submitText: 'Create bundles',
+    body: '<div class="hint">Each bundle gets a <b>barcode</b>. Print it, tie it to the bundle — the floor scans it at every step (knit → cut → sew → finish) and KnitFlow counts pieces live.</div>' +
+      '<div class="form-grid">' +
+      '<div class="field"><label>Order <span class="req">*</span></label><select name="orderId">' + usable.map(o => '<option value="' + o.id + '">' + o.id + ' — ' + esc(o.style) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Pieces per bundle</label><input name="qty" type="number" min="1" value="100"></div>' +
+      '<div class="field full"><label>How many bundles</label><input name="count" type="number" min="1" max="50" value="5"></div>' +
+      '</div>',
+    onSubmit: async fd => {
+      const r = await api('/bundles', { method: 'POST', body: Object.fromEntries(fd) });
+      toast(r.created.length + ' bundles created — barcodes ready');
+      route();
+    }
+  });
+}
+
+async function viewScan(view) {
+  const [{ bundles, workers }, { orders }, { employees }] = await Promise.all([api('/bundles'), api('/orders'), api('/hr')]);
+  const editable = can('production');
+  const totalPcs7 = workers.reduce((s, w) => s + w.pcs, 0);
+  const scannedToday = bundles.reduce((s, b) => s + (b.scans || []).filter(x => x.date === new Date().toISOString().slice(0, 10)).reduce((a, x) => a + x.pcs, 0), 0);
+
+  const FLOORS = ['Knitting', 'Cutting', 'Sewing', 'Finishing'];
+  const rows = bundles.slice(0, 30).map(bd =>
+    '<tr><td><span class="mono b">' + esc(bd.barcode) + '</span><div class="cell-sub">' + esc(bd.id) + '</div></td>' +
+    '<td><div class="cell-main">' + esc(bd.orderId) + '</div><div class="cell-sub">' + esc(bd.style) + '</div></td>' +
+    '<td class="num">' + num(bd.qty) + '</td>' +
+    '<td><div class="floor-dots">' + FLOORS.map(f => {
+      const done = (bd.floorsDone && bd.floorsDone[f]) || 0;
+      const full = done >= bd.qty;
+      return '<span class="fdot' + (full ? ' full' : done > 0 ? ' part' : '') + '" title="' + f + ': ' + done + '/' + bd.qty + '">' + f[0] + '</span>';
+    }).join('') + '</div><div class="cell-sub">' + FLOORS.map(f => f[0] + ' ' + ((bd.floorsDone && bd.floorsDone[f]) || 0)).join(' · ') + '</div></td>' +
+    '<td><span class="pill ' + (bd.position === 'Finishing' ? 'p-green' : bd.position === 'Not started' ? 'p-slate' : 'p-blue') + '">' + esc(bd.position) + '</span></td>' +
+    '</tr>'
+  ).join('');
+  const workerRows = workers.slice(0, 10).map(w =>
+    '<tr><td><div class="cell-main">' + esc(w.worker) + '</div><div class="cell-sub">' + Object.entries(w.floors).map(e => e[0] + ': ' + num(e[1])).join(' · ') + '</div></td>' +
+    '<td class="num"><b>' + num(w.pcs) + '</b> pcs</td></tr>'
+  ).join('');
+
+  view.innerHTML =
+    '<div class="toolbar"><div class="summary-chips">' +
+    '<span class="s-chip"><b class="num">' + num(scannedToday) + '</b><span>pcs scanned today</span></span>' +
+    '<span class="s-chip"><b class="num">' + num(totalPcs7) + '</b><span>pcs scanned (7 days)</span></span>' +
+    '<span class="s-chip"><b class="num">' + bundles.length + '</b><span>bundles tracked</span></span>' +
+    '</div><span class="spacer"></span>' +
+    (editable ? '<button class="btn primary" id="make-bundles2">' + ICONS.barcode + ' Create bundles</button>' : '') + '</div>' +
+    '<div class="grid g-2 mb">' +
+    '<div class="card"><div class="card-head"><span class="card-title">Scan station</span><span class="right mini">knit → cut → sew → finish</span></div>' +
+    (editable ?
+      '<div class="field"><label>Barcode</label><input id="scan-bc" class="scan-big" placeholder="scan or type… e.g. 900001" autocomplete="off"></div>' +
+      '<div class="form-grid">' +
+      '<div class="field"><label>Floor</label><select id="scan-floor">' + FLOORS.map(f => '<option>' + f + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Pieces</label><input id="scan-pcs" type="number" min="1" value="100"></div>' +
+      '</div>' +
+      '<div class="field"><label>Worker</label><input id="scan-worker" list="workers-dl" placeholder="name"><datalist id="workers-dl">' + employees.map(e => '<option value="' + esc(e.name) + '">').join('') + '</datalist></div>' +
+      '<button class="btn primary" id="scan-btn" style="width:100%;justify-content:center;padding:12px;font-size:15px">' + ICONS.check + ' Scan pieces</button>' +
+      '<div id="scan-result" class="mini" style="margin-top:10px"></div>'
+      : '<div class="empty">Production department can scan.</div>') +
+    '</div>' +
+    '<div class="card"><div class="card-head"><span class="card-title">Worker efficiency — 7 days</span></div>' +
+    (workerRows ? '<table class="tbl"><thead><tr><th>Worker</th><th class="r">Output</th></tr></thead><tbody>' + workerRows + '</tbody></table>' : '<div class="empty">No scans yet this week.</div>') +
+    '</div></div>' +
+    '<div class="card"><div class="card-head"><span class="card-title">Bundles in the factory</span></div>' +
+    '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Barcode</th><th>Order</th><th class="r">Pcs</th><th>Floor progress</th><th>Position</th></tr></thead><tbody>' +
+    (rows || '<tr><td colspan="5"><div class="empty">No bundles yet — create some from an order in production.</div></td></tr>') +
+    '</tbody></table></div></div>';
+
+  const mb2 = $('#make-bundles2');
+  if (mb2) mb2.addEventListener('click', () => bundlesModal(orders));
+  const doScan = async () => {
+    const bc = $('#scan-bc').value.trim();
+    if (!bc) { $('#scan-result').innerHTML = '<span style="color:var(--red)">Type or scan a barcode first</span>'; return; }
+    try {
+      const r = await api('/scan', { method: 'POST', body: { barcode: bc, floor: $('#scan-floor').value, pcs: $('#scan-pcs').value, worker: $('#scan-worker').value } });
+      $('#scan-result').innerHTML = '<span style="color:var(--green)">✓ ' + num($('#scan-pcs').value || 0) + ' pcs at ' + $('#scan-floor').value + ' — bundle ' + r.bundle.id + (r.prodUpdated ? ' · production counters updated' : '') + '</span>';
+      toast('Scan saved — ' + $('#scan-floor').value + ' +' + $('#scan-pcs').value + ' pcs');
+      setTimeout(() => viewScan(view), 600);
+    } catch (e) {
+      $('#scan-result').innerHTML = '<span style="color:var(--red)">' + esc(e.message) + '</span>';
+    }
+  };
+  const sb = $('#scan-btn');
+  if (sb) { sb.addEventListener('click', doScan); $('#scan-bc').addEventListener('keydown', e => { if (e.key === 'Enter') doScan(); }); $('#scan-bc').focus(); }
+}
+
+/* ---------- machine board ---------- */
+
+async function viewMachineBoard(view) {
+  const { machines } = await api('/machines');
+  const editable = can('machines');
+  const knit = machines.filter(m => m.type === 'Knitting');
+  const avgUtil = knit.length ? Math.round(knit.reduce((s, m) => s + m.stats.utilization, 0) / knit.length) : 0;
+  const pcsToday = knit.reduce((s, m) => s + m.stats.pcsToday, 0);
+  const downH = knit.reduce((s, m) => s + m.stats.downHours7, 0);
+  const utilColor = u => u >= 80 ? 'var(--green)' : u >= 55 ? '#b45309' : 'var(--red)';
+
+  const cards = knit.map(mc => {
+    const st = mc.stats;
+    const todayPct = st.targetToday ? Math.min(100, Math.round(st.pcsToday / st.targetToday * 100)) : 0;
+    const downs = st.lastEvents.filter(e => e.type === 'down').slice(0, 2);
+    return '<div class="card" style="border-top:4px solid ' + (mc.status === 'Running' ? '#10b981' : mc.status === 'Maintenance' ? '#ef4444' : '#94a3b8') + '">' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:15px">' + esc(mc.code) + '</b>' + pill(MACH_PILL, mc.status) + '<span class="mini" style="margin-left:auto">' + esc(mc.assigned || 'unassigned') + '</span></div>' +
+      '<div class="mini" style="margin:4px 0 8px">' + esc(mc.model) + ' · ' + esc(mc.gauge) + '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:8px"><span class="num" style="font-size:30px;font-weight:800;color:' + utilColor(st.utilization) + '">' + st.utilization + '%</span><span class="mini">7-day utilization</span></div>' +
+      '<div class="mini" style="margin:7px 0 3px">Today: <b class="num">' + st.pcsToday + '</b> / ' + st.targetToday + ' pcs</div>' +
+      '<div class="inv-bar"><i style="width:' + todayPct + '%;background:' + utilColor(todayPct) + '"></i></div>' +
+      '<div class="mini" style="margin-top:7px">7d output <b class="num">' + num(st.produced7) + '</b> pcs · downtime <b class="num">' + st.downHours7 + ' h</b></div>' +
+      (downs.length ? '<div class="mini" style="color:var(--red);margin-top:3px">' + downs.map(d => esc(d.date) + ': ' + d.hours + 'h ' + esc(d.reason || '')).join('<br>') + '</div>' : '') +
+      (editable ? '<div class="kb-actions" style="margin-top:9px"><button class="btn sm primary" data-run="' + esc(mc.id) + '">Log output</button><button class="btn sm red" data-down="' + esc(mc.id) + '">Downtime</button><button class="btn sm" data-target="' + esc(mc.id) + '">Target</button></div>' : '') +
+      '</div>';
+  }).join('');
+
+  view.innerHTML =
+    '<div class="toolbar"><div class="summary-chips">' +
+    '<span class="s-chip"><b class="num" style="color:' + utilColor(avgUtil) + '">' + avgUtil + '%</b><span>fleet utilization (7d)</span></span>' +
+    '<span class="s-chip"><b class="num">' + num(pcsToday) + '</b><span>pcs knitted today</span></span>' +
+    '<span class="s-chip"><b class="num" style="color:' + (downH > 40 ? 'var(--red)' : 'var(--ink)') + '">' + downH + ' h</b><span>downtime this week</span></span>' +
+    '</div><span class="spacer"></span><span class="mini">Puyuan-style live machine board — put this on a factory TV</span></div>' +
+    '<div class="mach-grid">' + cards + '</div>';
+
+  view.querySelectorAll('[data-run]').forEach(b => b.addEventListener('click', () => machineEventModal(b.dataset.run, 'run', view)));
+  view.querySelectorAll('[data-down]').forEach(b => b.addEventListener('click', () => machineEventModal(b.dataset.down, 'down', view)));
+  view.querySelectorAll('[data-target]').forEach(b => b.addEventListener('click', () => {
+    const mc = machines.find(x => x.id === b.dataset.target);
+    openModal({
+      title: 'Target speed — ' + mc.code, submitText: 'Save target',
+      body: '<div class="field"><label>Pieces per day (at 20 running hours)</label><input name="targetPerDay" type="number" min="1" value="' + (mc.targetPerDay || 12) + '"></div>',
+      onSubmit: async fd => {
+        await api('/machines/' + mc.id, { method: 'PATCH', body: Object.fromEntries(fd) });
+        toast('Target saved');
+        viewMachineBoard(view);
+      }
+    });
+  }));
+}
+
+function machineEventModal(machineId, type, view) {
+  openModal({
+    title: type === 'run' ? 'Log machine output' : 'Log machine downtime', submitText: type === 'run' ? 'Save output' : 'Save downtime',
+    body: type === 'run' ?
+      '<div class="form-grid"><div class="field"><label>Date</label><input name="date" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
+      '<div class="field"><label>Pieces produced</label><input name="pcs" type="number" min="0" value="12"></div>' +
+      '<div class="field full"><label>Running hours</label><input name="hours" type="number" min="0" value="20"></div></div>' :
+      '<div class="form-grid"><div class="field"><label>Date</label><input name="date" type="date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
+      '<div class="field"><label>Down hours</label><input name="hours" type="number" min="0" value="2"></div>' +
+      '<div class="field full"><label>Reason</label><select name="reason"><option>Yarn wait</option><option>Breakdown</option><option>Program change</option><option>Planned maintenance</option><option>No operator</option></select></div></div>',
+    onSubmit: async fd => {
+      await api('/machines/' + machineId + '/events', { method: 'POST', body: Object.assign({ type }, Object.fromEntries(fd)) });
+      toast(type === 'run' ? 'Output logged' : 'Downtime logged');
+      viewMachineBoard(view);
+    }
   });
 }
 

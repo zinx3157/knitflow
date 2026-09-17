@@ -45,8 +45,9 @@ const sessions = new Map(); // token -> userId
 
 function seed() {
   const now = '2026-09-17T09:12:00.000Z';
+  const dAgo = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
   return {
-    seq: { order: 1010, req: 9, po: 2606, batch: 2618, ship: 4503, buyer: 6, supplier: 6, act: 100, sample: 209, prod: 105, qc: 505, emp: 17, ex: 108, user: 10 },
+    seq: { order: 1010, req: 9, po: 2606, batch: 2618, ship: 4503, buyer: 6, supplier: 6, act: 100, sample: 209, prod: 105, qc: 505, emp: 17, ex: 108, user: 10, bnd: 5007 },
     users: [
       { id: 'U-01', name: 'Amina Rasoanaivo', email: 'admin@knitflow.io', password: 'knit123', role: 'admin', title: 'Managing Director', dept: 'Management' },
       { id: 'U-02', name: 'Hery Andriamampianina', email: 'merch@knitflow.io', password: 'knit123', role: 'merchandising', title: 'Merchandising Manager', dept: 'Merchandising' },
@@ -122,13 +123,13 @@ function seed() {
     ],
     batches: [
       { id: 'DB-2608', orderId: 'ORD-1003', color: 'Tango Red', hex: '#B3383D', qtyKg: 2100, machine: 'D-02', recipe: 'ACR-RED-03', yarnMaterialId: 'M-02', status: 'Rework',  reworks: 1, startedAt: '2026-09-04T08:00:00.000Z', doneAt: null, note: 'Shade 15% light — sent for re-dye' },
-      { id: 'DB-2609', orderId: 'ORD-1003', color: 'Forest', hex: '#2F5233', qtyKg: 3400, machine: 'D-02', recipe: 'ACR-FOREST-07', yarnMaterialId: 'M-02', status: 'Passed', reworks: 0, startedAt: '2026-09-08T08:00:00.000Z', doneAt: '2026-09-10T15:00:00.000Z', note: '' },
+      { id: 'DB-2609', orderId: 'ORD-1003', color: 'Forest', hex: '#2F5233', qtyKg: 3400, machine: 'D-02', recipe: 'ACR-FOREST-07', yarnMaterialId: 'M-02', status: 'Passed', reworks: 0, startedAt: '2026-09-08T08:00:00.000Z', doneAt: '2026-09-10T15:00:00.000Z', note: '', resources: { waterL: 209000, powerKwh: 4100, steamKg: 17200, chemCost: 2900 } },
       { id: 'DB-2610', orderId: 'ORD-1003', color: 'Heather Blue', hex: '#7C9CBF', qtyKg: 2900, machine: 'D-05', recipe: 'ACR-HEATH-02', yarnMaterialId: 'M-02', status: 'Passed', reworks: 0, startedAt: '2026-09-09T08:00:00.000Z', doneAt: '2026-09-12T14:30:00.000Z', note: '' },
       { id: 'DB-2611', orderId: 'ORD-1003', color: 'Tango Red', hex: '#B3383D', qtyKg: 2100, machine: 'D-02', recipe: 'ACR-RED-04', yarnMaterialId: 'M-02', status: 'Passed', reworks: 0, startedAt: '2026-09-11T08:00:00.000Z', doneAt: '2026-09-14T18:22:00.000Z', note: 'Re-dye after shade rejection' },
       { id: 'DB-2612', orderId: 'ORD-1001', color: 'Navy', hex: '#1F2A44', qtyKg: 4600, machine: 'D-04', recipe: 'CTN-NVY-11', yarnMaterialId: 'M-01', status: 'Dyeing', reworks: 0, startedAt: '2026-09-16T16:30:00.000Z', doneAt: null, note: '' },
       { id: 'DB-2613', orderId: 'ORD-1001', color: 'Melange Grey', hex: '#9AA0A6', qtyKg: 3100, machine: 'D-01', recipe: 'CTN-MLG-05', yarnMaterialId: 'M-01', status: 'Drying', reworks: 0, startedAt: '2026-09-15T08:00:00.000Z', doneAt: null, note: '' },
       { id: 'DB-2614', orderId: 'ORD-1001', color: 'Camel', hex: '#C19A6B', qtyKg: 2500, machine: 'D-03', recipe: 'CTN-CML-09', yarnMaterialId: 'M-01', status: 'QC', reworks: 0, startedAt: '2026-09-14T08:00:00.000Z', doneAt: null, note: '' },
-      { id: 'DB-2615', orderId: 'ORD-1004', color: 'Charcoal', hex: '#36393E', qtyKg: 5500, machine: 'D-03', recipe: 'MER-CHAR-01', yarnMaterialId: 'M-03', status: 'Passed', reworks: 0, startedAt: '2026-09-05T08:00:00.000Z', doneAt: '2026-09-08T11:00:00.000Z', note: '' },
+      { id: 'DB-2615', orderId: 'ORD-1004', color: 'Charcoal', hex: '#36393E', qtyKg: 5500, machine: 'D-03', recipe: 'MER-CHAR-01', yarnMaterialId: 'M-03', status: 'Passed', reworks: 0, startedAt: '2026-09-05T08:00:00.000Z', doneAt: '2026-09-08T11:00:00.000Z', note: '', resources: { waterL: 338000, powerKwh: 6600, steamKg: 27900, chemCost: 5600 } },
       { id: 'DB-2616', orderId: 'ORD-1004', color: 'Sand', hex: '#D6C7A1', qtyKg: 3700, machine: 'D-05', recipe: 'MER-SAND-02', yarnMaterialId: 'M-03', status: 'Passed', reworks: 0, startedAt: '2026-09-06T08:00:00.000Z', doneAt: '2026-09-09T16:10:00.000Z', note: '' },
       { id: 'DB-2617', orderId: 'ORD-1008', color: 'Oatmeal', hex: '#D8CFC0', qtyKg: 6400, machine: 'D-02', recipe: 'MER-OAT-04', yarnMaterialId: 'M-03', status: 'Passed', reworks: 0, startedAt: '2026-09-12T08:00:00.000Z', doneAt: '2026-09-15T14:02:00.000Z', note: '' }
     ],
@@ -152,14 +153,14 @@ function seed() {
       { id: 'SMP-208', orderId: 'ORD-1009', type: 'Proto Sample', status: 'Requested', sentDate: null, approvedDate: null, note: 'New style — first proto' }
     ],
     machines: [
-      { id: 'MC-01', code: 'K-01', type: 'Knitting', model: 'Shima Seiki SES-122FF', gauge: '14GG', status: 'Running', assigned: 'ORD-1003' },
-      { id: 'MC-02', code: 'K-02', type: 'Knitting', model: 'Shima Seiki SES-122FF', gauge: '14GG', status: 'Running', assigned: 'ORD-1003' },
-      { id: 'MC-03', code: 'K-03', type: 'Knitting', model: 'Stoll ADF 530-32', gauge: '12GG', status: 'Running', assigned: 'ORD-1001' },
-      { id: 'MC-04', code: 'K-04', type: 'Knitting', model: 'Stoll ADF 530-32', gauge: '12GG', status: 'Idle', assigned: null },
-      { id: 'MC-05', code: 'K-05', type: 'Knitting', model: 'Universal flat bed', gauge: '7GG', status: 'Running', assigned: 'ORD-1002' },
-      { id: 'MC-06', code: 'K-06', type: 'Knitting', model: 'Universal flat bed', gauge: '5GG', status: 'Maintenance', assigned: null },
-      { id: 'MC-07', code: 'K-07', type: 'Knitting', model: 'Shima Seiki NSRG-24', gauge: '7GG', status: 'Idle', assigned: null },
-      { id: 'MC-08', code: 'K-08', type: 'Knitting', model: 'Shima Seiki NSRG-24', gauge: '8GG', status: 'Idle', assigned: null },
+      { id: 'MC-01', code: 'K-01', type: 'Knitting', model: 'Shima Seiki SES-122FF', gauge: '14GG', status: 'Running', assigned: 'ORD-1003', targetPerDay: 14, events: [ { date: dAgo(0), type: 'run', pcs: 12, hours: 20 }, { date: dAgo(1), type: 'run', pcs: 14, hours: 20 }, { date: dAgo(2), type: 'run', pcs: 13, hours: 20 }, { date: dAgo(3), type: 'down', hours: 4, reason: 'Yarn wait' }, { date: dAgo(3), type: 'run', pcs: 9, hours: 16 }, { date: dAgo(4), type: 'run', pcs: 14, hours: 20 } ] },
+      { id: 'MC-02', code: 'K-02', type: 'Knitting', model: 'Shima Seiki SES-122FF', gauge: '14GG', status: 'Running', assigned: 'ORD-1003', targetPerDay: 14, events: [ { date: dAgo(0), type: 'run', pcs: 13, hours: 20 }, { date: dAgo(1), type: 'run', pcs: 14, hours: 20 }, { date: dAgo(2), type: 'run', pcs: 14, hours: 20 }, { date: dAgo(3), type: 'run', pcs: 13, hours: 20 }, { date: dAgo(4), type: 'run', pcs: 14, hours: 20 } ] },
+      { id: 'MC-03', code: 'K-03', type: 'Knitting', model: 'Stoll ADF 530-32', gauge: '12GG', status: 'Running', assigned: 'ORD-1001', targetPerDay: 12, events: [ { date: dAgo(0), type: 'run', pcs: 10, hours: 20 }, { date: dAgo(1), type: 'down', hours: 2, reason: 'Program change' }, { date: dAgo(1), type: 'run', pcs: 9, hours: 18 }, { date: dAgo(2), type: 'run', pcs: 12, hours: 20 }, { date: dAgo(3), type: 'run', pcs: 11, hours: 20 }, { date: dAgo(4), type: 'run', pcs: 12, hours: 20 } ] },
+      { id: 'MC-04', code: 'K-04', type: 'Knitting', model: 'Stoll ADF 530-32', gauge: '12GG', status: 'Idle', assigned: null, targetPerDay: 12, events: [ { date: dAgo(5), type: 'run', pcs: 11, hours: 20 }, { date: '2026-09-11', type: 'run', pcs: 12, hours: 20 } ] },
+      { id: 'MC-05', code: 'K-05', type: 'Knitting', model: 'Universal flat bed', gauge: '7GG', status: 'Running', assigned: 'ORD-1002', targetPerDay: 10, events: [ { date: dAgo(0), type: 'run', pcs: 9, hours: 20 }, { date: dAgo(1), type: 'run', pcs: 10, hours: 20 }, { date: dAgo(2), type: 'down', hours: 6, reason: 'Breakdown — needle bed' }, { date: dAgo(2), type: 'run', pcs: 6, hours: 14 }, { date: dAgo(3), type: 'run', pcs: 10, hours: 20 }, { date: dAgo(4), type: 'run', pcs: 9, hours: 20 } ] },
+      { id: 'MC-06', code: 'K-06', type: 'Knitting', model: 'Universal flat bed', gauge: '5GG', status: 'Maintenance', assigned: null, targetPerDay: 10, events: [ { date: dAgo(1), type: 'down', hours: 20, reason: 'Planned maintenance' }, { date: dAgo(0), type: 'down', hours: 20, reason: 'Planned maintenance' } ] },
+      { id: 'MC-07', code: 'K-07', type: 'Knitting', model: 'Shima Seiki NSRG-24', gauge: '7GG', status: 'Idle', assigned: null, targetPerDay: 10, events: [ { date: dAgo(4), type: 'run', pcs: 9, hours: 20 } ] },
+      { id: 'MC-08', code: 'K-08', type: 'Knitting', model: 'Shima Seiki NSRG-24', gauge: '8GG', status: 'Idle', assigned: null, targetPerDay: 10, events: [] },
       { id: 'MC-09', code: 'D-01', type: 'Dyeing', model: 'Thies Luft-Roto 250 kg', gauge: '—', status: 'Dyeing', assigned: 'DB-2613' },
       { id: 'MC-10', code: 'D-02', type: 'Dyeing', model: 'Fongs FA-10 300 kg', gauge: '—', status: 'Idle', assigned: null },
       { id: 'MC-11', code: 'D-03', type: 'Dyeing', model: 'Thies Luft-Roto 200 kg', gauge: '—', status: 'Running', assigned: 'DB-2614' },
@@ -169,17 +170,25 @@ function seed() {
       { id: 'MC-15', code: 'DR-01', type: 'Dryer', model: 'Santex Tandematex 400', gauge: '—', status: 'Running', assigned: 'DB-2613' },
       { id: 'MC-16', code: 'DR-02', type: 'Dryer', model: 'Lafer Hydro 800', gauge: '—', status: 'Idle', assigned: null }
     ],
+    bundles: [
+      { id: 'BND-5001', barcode: '900001', orderId: 'ORD-1003', qty: 100, scans: [ { floor: 'Knitting', pcs: 100, worker: 'Soa Ravelo', date: dAgo(3) }, { floor: 'Cutting', pcs: 100, worker: 'Paul Rakotonirina', date: dAgo(2) }, { floor: 'Sewing', pcs: 100, worker: 'Jean-Paul Razafi', date: dAgo(1) }, { floor: 'Finishing', pcs: 100, worker: 'Hasina Andrianina', date: dAgo(0) } ] },
+      { id: 'BND-5002', barcode: '900002', orderId: 'ORD-1003', qty: 100, scans: [ { floor: 'Knitting', pcs: 100, worker: 'Soa Ravelo', date: dAgo(3) }, { floor: 'Cutting', pcs: 100, worker: 'Paul Rakotonirina', date: dAgo(2) }, { floor: 'Sewing', pcs: 60, worker: 'Jean-Paul Razafi', date: dAgo(0) } ] },
+      { id: 'BND-5003', barcode: '900003', orderId: 'ORD-1003', qty: 100, scans: [ { floor: 'Knitting', pcs: 100, worker: 'Soa Ravelo', date: dAgo(2) }, { floor: 'Cutting', pcs: 100, worker: 'Paul Rakotonirina', date: dAgo(1) } ] },
+      { id: 'BND-5004', barcode: '900004', orderId: 'ORD-1001', qty: 120, scans: [ { floor: 'Knitting', pcs: 120, worker: 'Soa Ravelo', date: dAgo(1) } ] },
+      { id: 'BND-5005', barcode: '900005', orderId: 'ORD-1001', qty: 120, scans: [ { floor: 'Knitting', pcs: 120, worker: 'Soa Ravelo', date: dAgo(0) }, { floor: 'Cutting', pcs: 80, worker: 'Paul Rakotonirina', date: dAgo(0) } ] },
+      { id: 'BND-5006', barcode: '900006', orderId: 'ORD-1008', qty: 80, scans: [ { floor: 'Knitting', pcs: 80, worker: 'Soa Ravelo', date: dAgo(1) }, { floor: 'Cutting', pcs: 80, worker: 'Paul Rakotonirina', date: dAgo(0) } ] }
+    ],
     production: [
-      { id: 'PROD-101', orderId: 'ORD-1003', target: 30000, knit: 30000, cut: 30000, sew: 28400, finish: 26100, machines: ['K-01', 'K-02'], status: 'Open', startedAt: '2026-09-15', logs: [{ date: '2026-09-17', floor: 'Finishing', pcs: 1300 }, { date: '2026-09-16', floor: 'Sewing', pcs: 2400 }] },
-      { id: 'PROD-102', orderId: 'ORD-1004', target: 12800, knit: 12800, cut: 12800, sew: 12800, finish: 12800, machines: ['K-05'], status: 'Done', startedAt: '2026-09-10', logs: [{ date: '2026-09-13', floor: 'Finishing', pcs: 4100 }] },
-      { id: 'PROD-103', orderId: 'ORD-1001', target: 24000, knit: 12400, cut: 0, sew: 0, finish: 0, machines: ['K-03'], status: 'Open', startedAt: '2026-09-16', logs: [{ date: '2026-09-17', floor: 'Knitting', pcs: 2600 }] },
-      { id: 'PROD-104', orderId: 'ORD-1008', target: 6500, knit: 6500, cut: 6500, sew: 4100, finish: 0, machines: [], status: 'Open', startedAt: '2026-09-16', logs: [{ date: '2026-09-17', floor: 'Sewing', pcs: 900 }] }
+      { id: 'PROD-101', orderId: 'ORD-1003', target: 30000, knit: 30000, cut: 30000, sew: 28400, finish: 26100, machines: ['K-01', 'K-02'], status: 'Open', startedAt: '2026-09-15', logs: [{ date: dAgo(0), floor: 'Finishing', pcs: 1300 }, { date: dAgo(1), floor: 'Sewing', pcs: 2400 }] },
+      { id: 'PROD-102', orderId: 'ORD-1004', target: 12800, knit: 12800, cut: 12800, sew: 12800, finish: 12800, machines: ['K-05'], status: 'Done', startedAt: '2026-09-10', logs: [{ date: dAgo(4), floor: 'Finishing', pcs: 4100 }] },
+      { id: 'PROD-103', orderId: 'ORD-1001', target: 24000, knit: 12400, cut: 0, sew: 0, finish: 0, machines: ['K-03'], status: 'Open', startedAt: '2026-09-16', logs: [{ date: dAgo(0), floor: 'Knitting', pcs: 2600 }] },
+      { id: 'PROD-104', orderId: 'ORD-1008', target: 6500, knit: 6500, cut: 6500, sew: 4100, finish: 0, machines: [], status: 'Open', startedAt: '2026-09-16', logs: [{ date: dAgo(0), floor: 'Sewing', pcs: 900 }] }
     ],
     inspections: [
       { id: 'QC-501', orderId: 'ORD-1004', shipmentId: 'SH-4502', type: 'Final AQL 2.5', sampleSize: 315, crit: 0, major: 2, minor: 5, result: 'Pending', inspector: 'Voahangy Rakoto', date: null, note: 'Booking ETD Oct 2 — needed fast' },
       { id: 'QC-502', orderId: 'ORD-1005', shipmentId: 'SH-4501', type: 'Final AQL 2.5', sampleSize: 200, crit: 0, major: 1, minor: 4, result: 'Pass', inspector: 'Voahangy Rakoto', date: '2026-09-08', note: '' },
-      { id: 'QC-503', orderId: 'ORD-1003', shipmentId: null, type: 'Inline Mid-Sewing', sampleSize: 125, crit: 0, major: 0, minor: 3, result: 'Pass', inspector: 'Voahangy Rakoto', date: '2026-09-15', note: '' },
-      { id: 'QC-504', orderId: 'ORD-1001', shipmentId: null, type: 'Inline Knitting', sampleSize: 80, crit: 0, major: 2, minor: 2, result: 'Fail', inspector: 'Voahangy Rakoto', date: '2026-09-16', note: 'Rib tension — retrain line 2' }
+      { id: 'QC-503', orderId: 'ORD-1003', shipmentId: null, type: 'Inline Mid-Sewing', sampleSize: 125, crit: 0, major: 0, minor: 3, result: 'Pass', inspector: 'Voahangy Rakoto', date: dAgo(2), note: '' },
+      { id: 'QC-504', orderId: 'ORD-1001', shipmentId: null, type: 'Inline Knitting', sampleSize: 80, crit: 0, major: 2, minor: 2, result: 'Fail', inspector: 'Voahangy Rakoto', date: dAgo(1), note: 'Rib tension — retrain line 2' }
     ],
     employees: [
       { id: 'E-01', name: 'Amina Rasoanaivo', dept: 'Management', position: 'Managing Director', joined: '2019-01-15', salary: 2600, status: 'Active' },
@@ -200,14 +209,14 @@ function seed() {
       { id: 'E-16', name: 'Sitraka Nomena', dept: 'Finance', position: 'Accountant', joined: '2023-09-01', salary: 700, status: 'Active' }
     ],
     attendance: {
-      '2026-09-17': { 'E-01': 'P', 'E-02': 'P', 'E-03': 'P', 'E-04': 'P', 'E-05': 'P', 'E-06': 'P', 'E-07': 'P', 'E-08': 'P', 'E-09': 'P', 'E-10': 'P', 'E-11': 'P', 'E-12': 'A', 'E-13': 'P', 'E-14': 'P', 'E-15': 'L', 'E-16': 'P' }
+      [dAgo(0)]: { 'E-01': 'P', 'E-02': 'P', 'E-03': 'P', 'E-04': 'P', 'E-05': 'P', 'E-06': 'P', 'E-07': 'P', 'E-08': 'P', 'E-09': 'P', 'E-10': 'P', 'E-11': 'P', 'E-12': 'A', 'E-13': 'P', 'E-14': 'P', 'E-15': 'L', 'E-16': 'P' }
     },
     invoices: [
       { id: 'INV-4481', shipmentId: 'SH-4481', orderId: 'ORD-0992', buyerId: 'B-02', amount: 148500, status: 'Paid', issued: '2026-07-12', due: '2026-08-11', payments: [{ date: '2026-08-08', amount: 148500, ref: 'TT-BANK-8812' }] },
       { id: 'INV-4488', shipmentId: 'SH-4488', orderId: 'ORD-0991', buyerId: 'B-01', amount: 152000, status: 'Paid', issued: '2026-07-28', due: '2026-08-27', payments: [{ date: '2026-08-24', amount: 152000, ref: 'LC-BANK-1043' }] },
       { id: 'INV-4490', shipmentId: 'SH-4490', orderId: 'ORD-0993', buyerId: 'B-03', amount: 158600, status: 'Paid', issued: '2026-08-05', due: '2026-09-04', payments: [{ date: '2026-09-01', amount: 158600, ref: 'TT-BANK-9032' }] },
       { id: 'INV-4500', shipmentId: 'SH-4500', orderId: 'ORD-1006', buyerId: 'B-05', amount: 110000, status: 'Open', issued: '2026-08-22', due: '2026-10-06', payments: [] },
-      { id: 'INV-4501', shipmentId: 'SH-4501', orderId: 'ORD-1005', buyerId: 'B-01', amount: 134400, status: 'Partial', issued: '2026-09-10', due: '2026-10-25', payments: [{ date: '2026-09-15', amount: 40000, ref: 'TT advance 30%' }] }
+      { id: 'INV-4501', shipmentId: 'SH-4501', orderId: 'ORD-1005', buyerId: 'B-01', amount: 134400, status: 'Partial', issued: '2026-09-10', due: '2026-10-25', payments: [{ date: dAgo(2), amount: 40000, ref: 'TT advance 30%' }] }
     ],
     expenses: [
       { id: 'EX-101', date: '2026-09-01', category: 'Salaries', desc: 'August payroll', amount: 15400 },
@@ -215,8 +224,8 @@ function seed() {
       { id: 'EX-103', date: '2026-09-05', category: 'Freight & Handling', desc: 'CFS & inland haulage', amount: 2800 },
       { id: 'EX-104', date: '2026-09-08', category: 'Utilities', desc: 'Electricity + water — August', amount: 5100 },
       { id: 'EX-105', date: '2026-09-10', category: 'Maintenance', desc: 'D-02 spare parts & service', amount: 950 },
-      { id: 'EX-106', date: '2026-09-12', category: 'Salaries', desc: 'Casual labor — packing', amount: 1200 },
-      { id: 'EX-107', date: '2026-09-15', category: 'Other', desc: 'Office & communications', amount: 340 }
+      { id: 'EX-106', date: dAgo(5), category: 'Salaries', desc: 'Casual labor — packing', amount: 1200 },
+      { id: 'EX-107', date: dAgo(2), category: 'Other', desc: 'Office & communications', amount: 340 }
     ],
     costsheets: [
       { id: 'CS-1001', orderId: 'ORD-1001', yarnKg: 11090, yarnRate: 3.35, dyeChemPerKg: 0.85, trimsPerPc: 0.09, cmPerPc: 1.65, overheadPct: 8, freightPerPc: 0, note: '' },
@@ -226,6 +235,7 @@ function seed() {
     ],
     sessions: {},
     settings: {
+      dyeStd: { waterLPkg: 60, powerKwhPkg: 1.2, steamKgPkg: 5 },
       name: 'Analamanga Knitwear Co.',
       address: 'Lot 42 Industrial Zone, Analamanga, Antananarivo 101, Madagascar',
       phone: '+261 34 12 345 67',
@@ -259,6 +269,13 @@ function load() {
       for (const k of Object.keys(fresh)) if (db[k] === undefined) db[k] = fresh[k];
       for (const k of Object.keys(fresh.seq)) if (db.seq[k] === undefined) db.seq[k] = fresh.seq[k];
       for (const u of fresh.users) if (!db.users.some(x => x.email === u.email)) db.users.push(u);
+      for (const mc of db.machines || []) {
+        if (mc.targetPerDay === undefined) mc.targetPerDay = mc.type === 'Knitting' ? 12 : 0;
+        if (!mc.events) mc.events = [];
+      }
+      if (!db.bundles) db.bundles = [];
+      if (!db.seq.bnd) db.seq.bnd = 5007;
+      if (!db.settings.dyeStd) db.settings.dyeStd = { waterLPkg: 60, powerKwhPkg: 1.2, steamKgPkg: 5 };
       return;
     }
     catch (e) { console.error('DB corrupt, reseeding:', e.message); }
@@ -758,11 +775,24 @@ async function apiRoute(req, res, p) {
 
   // ---- dye batches
   if (method === 'GET' && p === '/api/batches') {
+    const std = db.settings.dyeStd || { waterLPkg: 60, powerKwhPkg: 1.2, steamKgPkg: 5 };
     const batches = db.batches.map(b => {
       const o = db.orders.find(x => x.id === b.orderId) || {};
-      return Object.assign({}, b, { orderPo: o.po || '', orderStage: o.stage || '' });
+      const waterPerKg = b.resources && b.qtyKg ? +(b.resources.waterL / b.qtyKg).toFixed(1) : null;
+      const powerPerKg = b.resources && b.qtyKg ? +(b.resources.powerKwh / b.qtyKg).toFixed(2) : null;
+      return Object.assign({}, b, { orderPo: o.po || '', orderStage: o.stage || '', waterPerKg, powerPerKg });
     });
-    return json(res, 200, { batches });
+    const passed = db.batches.filter(b => b.status === 'Passed');
+    const passedKg = passed.reduce((sx, b) => sx + b.qtyKg, 0);
+    const firstPassKg = passed.filter(b => !b.reworks).reduce((sx, b) => sx + b.qtyKg, 0);
+    const withRes = passed.filter(b => b.resources);
+    const waterAvg = withRes.length ? +(withRes.reduce((sx, b) => sx + b.resources.waterL / b.qtyKg, 0) / withRes.length).toFixed(1) : null;
+    const powerAvg = withRes.length ? +(withRes.reduce((sx, b) => sx + b.resources.powerKwh / b.qtyKg, 0) / withRes.length).toFixed(2) : null;
+    const dyeSummary = {
+      rftPct: passedKg ? Math.round(firstPassKg / passedKg * 100) : 100,
+      waterAvgLPkg: waterAvg, powerAvgKwhPkg: powerAvg, std
+    };
+    return json(res, 200, { batches, dyeSummary });
   }
   if (method === 'POST' && p === '/api/batches') {
     if (!can(user, 'batches')) return json(res, 403, { error: 'Dye House department only' });
@@ -821,6 +851,18 @@ async function apiRoute(req, res, p) {
     }
     const order = db.orders.find(o => o.id === b.orderId);
     if (order) maybeAdvance(order);
+    save();
+    return json(res, 200, b);
+  }
+
+  if (method === 'PATCH' && (m = p.match(/^\/api\/batches\/([\w-]+)\/resources$/))) {
+    if (!can(user, 'batches')) return json(res, 403, { error: 'Dye House department only' });
+    const b = db.batches.find(x => x.id === m[1]);
+    if (!b) return json(res, 404, { error: 'Batch not found' });
+    const body = await readBody(req);
+    b.resources = { waterL: Number(body.waterL) || 0, powerKwh: Number(body.powerKwh) || 0, steamKg: Number(body.steamKg) || 0, chemCost: Number(body.chemCost) || 0 };
+    const wkg = b.qtyKg ? (b.resources.waterL / b.qtyKg).toFixed(1) : '—';
+    log('Dye House', user.name, 'Resources recorded for ' + b.id + ' — ' + wkg + ' L water/kg, ' + (b.qtyKg ? (b.resources.powerKwh / b.qtyKg).toFixed(2) : '—') + ' kWh/kg', 'batch', b.id);
     save();
     return json(res, 200, b);
   }
@@ -920,7 +962,24 @@ async function apiRoute(req, res, p) {
   }
 
   // ---- machines
-  if (method === 'GET' && p === '/api/machines') return json(res, 200, { machines: db.machines });
+  if (method === 'GET' && p === '/api/machines') {
+    const today = new Date().toISOString().slice(0, 10);
+    const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+    const machines = db.machines.map(mc => {
+      const evs = (mc.events || []).filter(e => e.date >= weekAgo);
+      const pcsToday = evs.filter(e => e.date === today && e.type === 'run').reduce((s, e) => s + (e.pcs || 0), 0);
+      const produced7 = evs.filter(e => e.type === 'run').reduce((s, e) => s + (e.pcs || 0), 0);
+      const downH7 = evs.filter(e => e.type === 'down').reduce((s, e) => s + (e.hours || 0), 0);
+      const cap7 = (mc.targetPerDay || 0) * 7;
+      return Object.assign({}, mc, { stats: {
+        pcsToday, produced7, downHours7: downH7,
+        utilization: cap7 ? Math.min(150, Math.round(produced7 / cap7 * 100)) : 0,
+        targetToday: mc.targetPerDay || 0,
+        lastEvents: (mc.events || []).slice(-5).reverse()
+      } });
+    });
+    return json(res, 200, { machines });
+  }
   if (method === 'PATCH' && (m = p.match(/^\/api\/machines\/([\w-]+)$/))) {
     if (!can(user, 'machines')) return json(res, 403, { error: 'Production department only' });
     const mc = db.machines.find(x => x.id === m[1]);
@@ -929,9 +988,27 @@ async function apiRoute(req, res, p) {
     const from = mc.status;
     if (b.status) mc.status = b.status;
     if (b.assigned !== undefined) mc.assigned = b.assigned || null;
+    if (b.targetPerDay !== undefined) mc.targetPerDay = Math.max(0, Number(b.targetPerDay) || 0);
     if (b.status && b.status !== from) log('Production', user.name, 'Machine ' + mc.code + ' (' + mc.type + ') → ' + b.status + (mc.assigned ? ' · ' + mc.assigned : ''), 'machine', mc.id);
     save();
     return json(res, 200, mc);
+  }
+
+  if (method === 'POST' && (m = p.match(/^\/api\/machines\/([\w-]+)\/events$/))) {
+    if (!can(user, 'machines')) return json(res, 403, { error: 'Production department only' });
+    const mc = db.machines.find(x => x.id === m[1]);
+    if (!mc) return json(res, 404, { error: 'Machine not found' });
+    const b = await readBody(req);
+    const type = b.type === 'down' ? 'down' : 'run';
+    const ev = { date: b.date || new Date().toISOString().slice(0, 10), type };
+    if (type === 'run') { ev.pcs = Math.max(0, Number(b.pcs) || 0); ev.hours = Math.max(0, Number(b.hours) || 0); }
+    else { ev.hours = Math.max(0, Number(b.hours) || 0); ev.reason = b.reason || 'Unspecified'; }
+    mc.events = mc.events || [];
+    mc.events.push(ev);
+    if (mc.events.length > 200) mc.events = mc.events.slice(-200);
+    if (type === 'down') log('Production', user.name, 'Machine ' + mc.code + ' DOWN ' + ev.hours + 'h — ' + ev.reason, 'machine', mc.id);
+    save();
+    return json(res, 201, ev);
   }
 
   // ---- production
@@ -940,7 +1017,25 @@ async function apiRoute(req, res, p) {
       const o = db.orders.find(x => x.id === pr.orderId) || {};
       return Object.assign({}, pr, { style: o.style || '', orderStage: o.stage || '', orderPo: o.po || '' });
     });
-    return json(res, 200, { production: prod });
+    const knit = db.machines.filter(x => x.type === 'Knitting');
+    const hoursPerDay = 20;
+    const avgTarget = knit.length ? knit.reduce((sx, x) => sx + (x.targetPerDay || 12), 0) / knit.length : 12;
+    let bookedHours = 0;
+    for (const pr of db.production) {
+      if (pr.status !== 'Open') continue;
+      const remaining = Math.max(0, (pr.target || 0) - (pr.knit || 0));
+      bookedHours += remaining / avgTarget * hoursPerDay;
+    }
+    const availableHoursWeek = knit.length * hoursPerDay * 7;
+    const capacity = {
+      machines: knit.length, hoursPerDay,
+      avgTargetPerDay: Math.round(avgTarget),
+      availableHoursWeek,
+      bookedHours: Math.round(bookedHours),
+      weeklyLoadPct: availableHoursWeek ? Math.min(100, Math.round(bookedHours / availableHoursWeek * 100)) : 0,
+      weeksToClear: availableHoursWeek ? +(bookedHours / availableHoursWeek).toFixed(1) : 0
+    };
+    return json(res, 200, { production: prod, capacity });
   }
   if (method === 'POST' && p === '/api/production') {
     if (!can(user, 'production')) return json(res, 403, { error: 'Production department only' });
@@ -988,6 +1083,69 @@ async function apiRoute(req, res, p) {
     log('Production', user.name, 'Production order ' + pr.id + ' completed — ' + fmtN(pr.finish) + ' pcs finished', 'production', pr.id);
     save();
     return json(res, 200, pr);
+  }
+
+  // ---- bundle scanning (WIP track & trace)
+  if (method === 'GET' && p === '/api/bundles') {
+    const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+    const workers = {};
+    for (const bd of db.bundles) for (const sc of (bd.scans || [])) {
+      if (sc.date < weekAgo) continue;
+      const k = sc.worker || 'Unknown';
+      workers[k] = workers[k] || { worker: k, pcs: 0, floors: {} };
+      workers[k].pcs += sc.pcs;
+      workers[k].floors[sc.floor] = (workers[k].floors[sc.floor] || 0) + sc.pcs;
+    }
+    const bundles = db.bundles.map(bd => {
+      const o = db.orders.find(x => x.id === bd.orderId) || {};
+      const floorsDone = {};
+      let last = null;
+      for (const sc of (bd.scans || [])) { floorsDone[sc.floor] = (floorsDone[sc.floor] || 0) + sc.pcs; last = sc; }
+      return Object.assign({}, bd, { style: o.style || '', po: o.po || '', floorsDone, position: last ? last.floor : 'Not started' });
+    });
+    return json(res, 200, { bundles, workers: Object.values(workers).sort((a, b) => b.pcs - a.pcs) });
+  }
+  if (method === 'POST' && p === '/api/bundles') {
+    if (!can(user, 'production')) return json(res, 403, { error: 'Production department only' });
+    const b = await readBody(req);
+    const order = db.orders.find(o => o.id === b.orderId);
+    if (!order) return json(res, 400, { error: 'Select a valid order' });
+    const qty = Math.max(1, Number(b.qty) || 0);
+    const count = Math.min(50, Math.max(1, Number(b.count) || 1));
+    const created = [];
+    for (let i = 0; i < count; i++) {
+      db.seq.bnd = (db.seq.bnd || 5007) + 1;
+      const bd = { id: 'BND-' + db.seq.bnd, barcode: String(100000 + db.seq.bnd), orderId: order.id, qty, scans: [] };
+      db.bundles.unshift(bd);
+      created.push(bd);
+    }
+    log('Production', user.name, 'Created ' + count + ' scan bundles for ' + order.id + ' — ' + fmtN(qty) + ' pcs each', 'production', order.id);
+    save();
+    return json(res, 201, { created });
+  }
+  if (method === 'POST' && p === '/api/scan') {
+    if (!can(user, 'production')) return json(res, 403, { error: 'Production department only' });
+    const b = await readBody(req);
+    const bd = db.bundles.find(x => x.barcode === String(b.barcode || '').trim());
+    if (!bd) return json(res, 404, { error: 'Barcode not found — check the label' });
+    const FLOORS = ['Knitting', 'Cutting', 'Sewing', 'Finishing'];
+    if (!FLOORS.includes(b.floor)) return json(res, 400, { error: 'Unknown floor' });
+    const pcs = Math.max(1, Number(b.pcs) || 0);
+    const done = (bd.scans || []).filter(sx => sx.floor === b.floor).reduce((sx, x) => sx + x.pcs, 0);
+    if (done + pcs > bd.qty) return json(res, 400, { error: 'Exceeds bundle quantity (' + bd.qty + ' pcs) — already scanned ' + done });
+    bd.scans.push({ floor: b.floor, pcs, worker: b.worker || '', date: new Date().toISOString().slice(0, 10) });
+    const pr = db.production.find(x => x.orderId === bd.orderId && x.status !== 'Done');
+    let prodUpdated = false;
+    if (pr) {
+      const keyMap = { Knitting: 'knit', Cutting: 'cut', Sewing: 'sew', Finishing: 'finish' };
+      const k = keyMap[b.floor];
+      pr[k] = Math.min(pr.target, pr[k] + pcs);
+      pr.logs.unshift({ date: new Date().toISOString().slice(0, 10), floor: b.floor, pcs });
+      if (pr.logs.length > 60) pr.logs.length = 60;
+      prodUpdated = true;
+    }
+    save();
+    return json(res, 200, { bundle: bd, prodUpdated });
   }
 
   // ---- quality inspections
