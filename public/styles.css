@@ -388,3 +388,31 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .fdot.part { background: var(--amber-soft); color: #b45309; border-color: #fde68a; }
 .fdot.full { background: var(--green); color: #fff; border-color: var(--green); }
 .mb-tv { font-variant-numeric: tabular-nums; }
+
+/* ---------- dock navigation (bottom) & company hub ---------- */
+.app-docked { display: block; }
+.sidebar { display: none; }
+.app-docked .page { padding-bottom: 140px; }
+.tb-logo { display: flex; align-items: center; gap: 9px; margin-right: 8px; }
+.tb-logo b { font-size: 16px; }
+.tb-logo em { font-style: normal; color: var(--primary); font-weight: 700; }
+.dock { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: #0b1120; border-radius: 18px; display: flex; gap: 2px; padding: 7px; z-index: 90; box-shadow: 0 12px 40px rgba(2,6,23,.35); max-width: calc(100vw - 20px); overflow-x: auto; }
+.dock-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 76px; padding: 9px 10px 7px; border-radius: 12px; color: #94a3b8; background: none; border: none; cursor: pointer; font-weight: 700; font-size: 10.5px; letter-spacing: .2px; }
+.dock-btn:hover { background: #16213b; color: #e2e8f0; }
+.dock-btn.active { background: var(--primary); color: #fff; }
+.dock-badge { position: absolute; top: 3px; right: 8px; background: #ef4444; color: #fff; border-radius: 99px; font-size: 9.5px; font-weight: 800; padding: 1px 5px; }
+.dock-menu { position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); background: #0b1120; border-radius: 15px; padding: 8px; flex-direction: column; min-width: 250px; box-shadow: 0 16px 48px rgba(2,6,23,.45); z-index: 89; gap: 2px; animation: dockUp .14s ease; }
+@keyframes dockUp { from { transform: translate(-50%, 8px); opacity: 0; } }
+.dock-menu-h { font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: #475569; font-weight: 800; padding: 8px 12px 6px; }
+.org-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.org-card { border-top: 4px solid var(--oc, var(--primary)); padding: 14px 15px; }
+.org-head { display: flex; gap: 10px; align-items: center; margin-bottom: 9px; }
+.org-ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fff; flex: none; }
+.org-profile { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.op-logo { width: 46px; height: 46px; flex: none; }
+@media (max-width: 1180px) { .org-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 760px) {
+  .dock { left: 8px; right: 8px; transform: none; justify-content: flex-start; }
+  .org-grid { grid-template-columns: 1fr; }
+  .org-profile { flex-direction: column; align-items: flex-start; }
+}

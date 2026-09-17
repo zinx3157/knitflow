@@ -221,30 +221,53 @@ const NAV = [
   { id: 'finance', icon: 'finance', text: 'Finance & Costing' },
   { id: 'hr', icon: 'hr', text: 'HR & Payroll' },
   { id: 'reports', icon: 'reports', text: 'Reports Center' },
-  { id: 'directory', icon: 'directory', text: 'Team & Partners' },
+  { id: 'directory', icon: 'directory', text: 'Company Hub' },
   { id: 'settings', icon: 'settings', text: 'Settings' }
 ];
 
 function renderShell() {
-  const navHtml = NAV.map(n => n.label
-    ? '<div class="sb-label">' + n.label + '</div>'
-    : '<button class="nav-item" data-nav="' + n.id + '">' + ICONS[n.icon] + '<span>' + n.text + '</span><span class="nav-badge" data-badge="' + n.id + '" style="display:none"></span></button>'
-  ).join('');
+  const DOCK = [
+    { key: 'home', label: 'Home', icon: 'dashboard', direct: 'dashboard', views: 'dashboard,activity', items: [
+      { id: 'dashboard', icon: 'dashboard', text: 'Factory Dashboard' },
+      { id: 'activity', icon: 'activity', text: 'Activity Thread' } ] },
+    { key: 'commercial', label: 'Commercial', icon: 'orders', views: 'orders,sampling,purchase', items: [
+      { id: 'orders', icon: 'orders', text: 'Merchandising' },
+      { id: 'sampling', icon: 'sampling', text: 'Sampling & Development' },
+      { id: 'purchase', icon: 'purchase', text: 'Purchase' } ] },
+    { key: 'mill', label: 'The Mill', icon: 'inventory', views: 'inventory,dye', items: [
+      { id: 'inventory', icon: 'inventory', text: 'Yarn & Trims Store' },
+      { id: 'dye', icon: 'dye', text: 'Dye House' } ] },
+    { key: 'factory', label: 'Factory', icon: 'production', views: 'machineboard,production,scan,quality', items: [
+      { id: 'machineboard', icon: 'production', text: 'Machine Board' },
+      { id: 'production', icon: 'production', text: 'Production Floors' },
+      { id: 'scan', icon: 'barcode', text: 'Floor Scanning' },
+      { id: 'quality', icon: 'quality', text: 'Quality Control' } ] },
+    { key: 'dispatch', label: 'Dispatch', icon: 'shipping', direct: 'shipping', views: 'shipping', items: [
+      { id: 'shipping', icon: 'shipping', text: 'Shipping' } ] },
+    { key: 'company', label: 'Company', icon: 'finance', views: 'finance,hr,reports,directory,settings', items: [
+      { id: 'finance', icon: 'finance', text: 'Finance & Costing' },
+      { id: 'hr', icon: 'hr', text: 'HR & Payroll' },
+      { id: 'reports', icon: 'reports', text: 'Reports Center' },
+      { id: 'directory', icon: 'directory', text: 'Company Hub' },
+      { id: 'settings', icon: 'settings', text: 'Settings' } ] }
+  ];
+  window.KF_DOCK = DOCK;
+  const dockBtn = g =>
+    '<button class="dock-btn" data-dockgroup="' + g.key + '" data-views="' + g.views + '"' + (g.direct ? ' data-nav="' + g.direct + '"' : ' data-dockmenu="' + g.key + '"') + '>' +
+    ICONS[g.icon] + '<span>' + g.label + '</span>' +
+    '<span class="dock-badge" data-dockbadge="' + g.key + '" style="display:none"></span>' +
+    '</button>';
+  const dockMenus = DOCK.filter(g => !g.direct).map(g =>
+    '<div class="dock-menu" id="dockmenu-' + g.key + '" style="display:none">' +
+    '<div class="dock-menu-h">' + g.label + '</div>' +
+    g.items.map(it => '<button class="nav-item" data-nav="' + it.id + '">' + ICONS[it.icon] + '<span>' + it.text + '</span><span class="nav-badge" data-badge="' + it.id + '" style="display:none"></span></button>').join('') +
+    '</div>').join('');
+
   root.innerHTML =
-  '<div class="app">' +
-    '<aside class="sidebar" id="sidebar">' +
-      '<div class="sb-logo">' + ICONS.logo + ' KnitFlow <span style="font-weight:500;color:#818cf8">OS</span></div>' +
-      '<div class="sb-co">Analamanga Knitwear Co.<br>One roof · one flow</div>' +
-      '<nav class="sb-nav">' + navHtml + '</nav>' +
-      '<div class="sb-user">' +
-        '<span class="avatar" style="background:' + (DEPT_COLORS[state.user.dept] || '#6366f1') + '">' + esc(initials(state.user.name)) + '</span>' +
-        '<span><div class="nm">' + esc(state.user.name.split(' ')[0]) + '</div><div class="rl">' + esc(state.user.dept) + '</div></span>' +
-        '<button class="icon-btn" id="logout-btn" title="Sign out">' + ICONS.logout + '</button>' +
-      '</div>' +
-    '</aside>' +
+  '<div class="app app-docked">' +
     '<div class="main">' +
       '<header class="topbar">' +
-        '<button class="icon-btn" id="menu-btn" style="display:none">' + ICONS.menu + '</button>' +
+        '<div class="tb-logo">' + ICONS.logo + ' <span><b>KnitFlow</b> <em>OS</em></span></div>' +
         '<div class="tb-title"><h1 id="tb-title"></h1><p id="tb-sub"></p></div>' +
         '<div class="tb-actions">' +
           '<button class="icon-btn" id="bell-btn" title="Alerts">' + ICONS.bell + '<span class="dot-alert" id="bell-dot" style="display:none"></span></button>' +
@@ -254,18 +277,36 @@ function renderShell() {
       '</header>' +
       '<div class="page" id="view"></div>' +
     '</div>' +
+    '<nav class="dock" id="dock">' + DOCK.map(dockBtn).join('') + '</nav>' +
+    dockMenus +
   '</div>';
-  document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => { location.hash = '#/' + b.dataset.nav; }));
-  $('#logout-btn').addEventListener('click', doLogout);
-  $('#menu-btn').style.display = window.innerWidth < 760 ? 'grid' : 'none';
-  $('#menu-btn').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
+  document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => { closeDockMenus(); location.hash = '#/' + b.dataset.nav; }));
+  document.querySelectorAll('[data-dockmenu]').forEach(b => b.addEventListener('click', () => toggleDockMenu(b.dataset.dockmenu)));
   $('#bell-btn').addEventListener('click', toggleBellPop);
   document.addEventListener('mousedown', onDocClick);
+  updateDockActive();
 }
+
+function updateDockActive() {
+  document.querySelectorAll('.dock-btn').forEach(b => {
+    const views = (b.dataset.views || '').split(',');
+    b.classList.toggle('active', views.indexOf(state.view) >= 0);
+  });
+}
+function toggleDockMenu(key) {
+  const menu = $('#dockmenu-' + key);
+  const wasOpen = menu && menu.style.display !== 'none';
+  closeDockMenus();
+  if (!wasOpen && menu) menu.style.display = 'flex';
+}
+function closeDockMenus() { document.querySelectorAll('.dock-menu').forEach(m => { m.style.display = 'none'; }); }
 
 function onDocClick(e) {
   const pop = $('#bell-pop');
   if (pop && state.popOpen && !pop.contains(e.target) && !$('#bell-btn').contains(e.target)) { pop.style.display = 'none'; state.popOpen = false; }
+  let inDock = false;
+  if (e.target.closest && (e.target.closest('.dock') || e.target.closest('.dock-menu'))) inDock = true;
+  if (!inDock) closeDockMenus();
 }
 
 async function toggleBellPop() {
@@ -311,13 +352,14 @@ async function route() {
     finance: ['Finance & Costing', 'Costing sheets, margins, invoices, receivables & expenses'],
     hr: ['HR & Payroll', 'Employees, attendance & monthly payroll'],
     reports: ['Reports Center', 'Printable management reports — every department'],
-    directory: ['Team & Partners', 'Everyone under one roof, plus who we buy from & sell to'],
+    directory: ['Company Hub', 'Departments, team, buyers, suppliers & company profile'],
     settings: ['Settings', 'Company profile, users & access'],
     activity: ['Activity Thread', 'Every department, every move — one live feed']
   };
   const t = titles[state.view] || ['KnitFlow', ''];
   setTitle(t[0], state.arg ? 'Order ' + state.arg : t[1]);
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.toggle('active', b.dataset.nav === state.view));
+  updateDockActive();
   const view = $('#view');
   view.innerHTML = '<div class="boot" style="height:40vh"><div class="spinner"></div></div>';
   try {
@@ -355,6 +397,11 @@ async function refreshBadges() {
     set('production', d.kpis.wipOrders);
     set('quality', d.kpis.qcPending);
     set('shipping', (d.kpis.inTransit || 0) + (d.tasks.packingQueue || 0));
+    const dock = (id, v) => { const el = document.querySelector('[data-dockbadge="' + id + '"]'); if (el) { el.style.display = v ? 'inline' : 'none'; el.textContent = v; } };
+    dock('commercial', (d.tasks.reqsPending || 0) + (d.kpis.samplesOpen || 0));
+    dock('mill', (d.kpis.inDyeing || 0) + (d.kpis.lowStock || 0));
+    dock('factory', (d.kpis.wipOrders || 0) + (d.kpis.qcPending || 0));
+    dock('dispatch', (d.kpis.inTransit || 0) + (d.tasks.packingQueue || 0));
     const dot = $('#bell-dot');
     if (dot) dot.style.display = (d.kpis.lowStock || d.tasks.reqsPending) ? 'block' : 'none';
   } catch (e) {}
@@ -1018,27 +1065,47 @@ async function viewInventory(view) {
 /* ---------------- directory ---------------- */
 
 async function viewDirectory(view) {
-  const [{ users }, { buyers }, { suppliers }] = await Promise.all([api('/users'), api('/buyers'), api('/suppliers')]);
-  const depts = ['Management', 'Merchandising', 'Purchase', 'Dye House', 'Shipping'];
-  const icons = { Management: ICONS.dashboard, Merchandising: ICONS.orders, Purchase: ICONS.purchase, 'Dye House': ICONS.dye, Shipping: ICONS.shipping };
+  const [{ users }, { buyers }, { suppliers }, { settings }, hr] = await Promise.all([api('/users'), api('/buyers'), api('/suppliers'), api('/settings'), api('/hr')]);
+  const payrollByDept = hr.byDept || {};
+  const depts = ['Management', 'Merchandising', 'Purchase', 'Dye House', 'Production', 'Quality Control', 'Shipping', 'Human Resources', 'Finance'];
+  const icons = { Management: ICONS.dashboard, Merchandising: ICONS.orders, Purchase: ICONS.purchase, 'Dye House': ICONS.dye, Production: ICONS.production, 'Quality Control': ICONS.quality, Shipping: ICONS.shipping, 'Human Resources': ICONS.hr, Finance: ICONS.finance };
+
   const deptCards = depts.map(dp => {
     const members = users.filter(u => u.dept === dp);
-    const c = DEPT_COLORS[dp];
-    return '<div class="card dept-card" style="--dc:' + c + '"><div class="d-head"><span class="d-ic" style="background:' + c + '">' + (icons[dp] || '') + '</span><div><b>' + dp + '</b><div class="mini">' + members.length + ' on the desk</div></div></div>' +
-      members.map(u => '<div class="member"><span class="avatar" style="background:' + c + '">' + esc(initials(u.name)) + '</span><div style="flex:1"><div class="m-n">' + esc(u.name) + '</div><div class="m-t">' + esc(u.title) + '</div></div><span class="mini">' + esc(u.email) + '</span></div>').join('') +
-    '</div>';
+    const payroll = (payrollByDept[dp] || {}).payroll || 0;
+    const c = DEPT_COLORS[dp] || '#6366f1';
+    return '<div class="card org-card" style="--oc:' + c + '">' +
+      '<div class="org-head"><span class="org-ic" style="background:' + c + '">' + (icons[dp] || '') + '</span>' +
+      '<div style="flex:1;min-width:0"><b>' + dp + '</b><div class="mini">' + members.length + ' on the desk · ' + money(payroll) + '/mo payroll</div></div></div>' +
+      members.slice(0, 3).map(u => '<div class="member"><span class="avatar" style="background:' + c + ';width:26px;height:26px;font-size:10px">' + esc(initials(u.name)) + '</span><div style="flex:1;min-width:0"><div class="m-n" style="font-size:12px">' + esc(u.name) + '</div><div class="m-t">' + esc(u.title) + '</div></div></div>').join('') +
+      (members.length > 3 ? '<div class="mini" style="margin-top:6px">+' + (members.length - 3) + ' more…</div>' : '') +
+      '</div>';
   }).join('');
 
   const buyerRows = buyers.map(b => '<tr><td class="cell-main">' + esc(b.name) + '</td><td>' + esc(b.country) + '</td><td>' + esc(b.contact) + '</td><td class="mini">' + esc(b.email) + '</td></tr>').join('');
-  const supRows = suppliers.map(s => '<tr><td class="cell-main">' + esc(s.name) + '</td><td>' + esc(s.type) + '</td><td>' + esc(s.location) + '</td><td><span class="pill p-amber">★ ' + s.rating + '</span></td></tr>').join('');
+  const supRows = suppliers.map(sp => '<tr><td class="cell-main">' + esc(sp.name) + '</td><td>' + esc(sp.type) + '</td><td>' + esc(sp.location) + '</td><td><span class="pill p-amber">★ ' + sp.rating + '</span></td></tr>').join('');
 
   view.innerHTML =
-    '<div class="hint mb">' + ICONS.users + ' <b>One roof, one truth.</b> Each department has its own console but works the same live data — when Dye House passes a batch, Merchandising and Shipping see it instantly.</div>' +
-    '<div class="grid g-3 mb">' + deptCards + '</div>' +
+    '<div class="card mb"><div class="org-profile">' +
+    '<div class="op-logo">' + ICONS.logo + '</div>' +
+    '<div style="flex:1;min-width:240px"><b style="font-size:17px">' + esc(settings.name) + '</b><div class="mini" style="margin-top:3px">' + esc(settings.address) + '</div>' +
+    '<div class="mini">' + esc(settings.phone) + ' · ' + esc(settings.email) + ' · ' + esc(settings.vat) + '</div></div>' +
+    '<div class="summary-chips">' +
+    '<span class="s-chip"><b class="num">' + hr.employees.length + '</b><span>employees</span></span>' +
+    '<span class="s-chip"><b class="num">' + money(hr.totalPayroll) + '</b><span>monthly payroll</span></span>' +
+    '<span class="s-chip"><b class="num">' + buyers.length + '</b><span>buyers</span></span>' +
+    '<span class="s-chip"><b class="num">' + suppliers.length + '</b><span>suppliers</span></span>' +
+    '</div></div></div>' +
+    '<div class="hint mb">' + ICONS.users + ' <b>One roof, one truth.</b> Nine departments working the same live data — merchandising to dispatch, everyone under this roof.</div>' +
+    '<h3 style="margin:0 0 10px;font-size:13px;color:var(--mut);letter-spacing:.5px;text-transform:uppercase">Departments</h3>' +
+    '<div class="org-grid mb">' + deptCards + '</div>' +
     '<div class="grid g-2">' +
-      '<div class="card"><div class="card-head"><span class="card-title">Our buyers</span></div><table class="tbl"><thead><tr><th>Buyer</th><th>Country</th><th>Contact</th><th>Email</th></tr></thead><tbody>' + buyerRows + '</tbody></table></div>' +
-      '<div class="card"><div class="card-head"><span class="card-title">Approved suppliers</span></div><table class="tbl"><thead><tr><th>Supplier</th><th>Type</th><th>Location</th><th>Rating</th></tr></thead><tbody>' + supRows + '</tbody></table></div>' +
+    '<div class="card"><div class="card-head"><span class="card-title">Our buyers — ' + buyers.length + '</span><span class="right"><button class="linklike" data-go="#/orders">Their orders ' + ICONS.arrow + '</button></span></div>' +
+    '<table class="tbl"><thead><tr><th>Buyer</th><th>Country</th><th>Contact</th><th>Email</th></tr></thead><tbody>' + buyerRows + '</tbody></table></div>' +
+    '<div class="card"><div class="card-head"><span class="card-title">Approved suppliers — ' + suppliers.length + '</span><span class="right"><button class="linklike" data-go="#/purchase">Purchase desk ' + ICONS.arrow + '</button></span></div>' +
+    '<table class="tbl"><thead><tr><th>Supplier</th><th>Type</th><th>Location</th><th>Rating</th></tr></thead><tbody>' + supRows + '</tbody></table></div>' +
     '</div>';
+  view.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => { location.hash = el.dataset.go; }));
 }
 
 /* ---------------- activity ---------------- */
