@@ -49,7 +49,7 @@ function dueBadge(d) {
   return '<span class="due ok">' + n + 'd left</span>';
 }
 function initials(name) { return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
-function can(perm) { return state.user && (state.user.role === 'admin' || (DEPT_PERMS[state.user.role] || []).includes(perm)); }
+function can(perm) { return state.user && (state.user.role === 'admin' || (Array.isArray(state.user.perms) ? state.user.perms : DEPT_PERMS[state.user.role] || []).includes(perm)); }
 function pill(map, status) { return '<span class="pill ' + (map[status] || 'p-slate') + '">' + esc(status) + '</span>'; }
 
 async function api(path, opts = {}) {
@@ -161,7 +161,7 @@ function renderLogin(err) {
   root.innerHTML =
   '<div class="auth">' +
     '<div class="auth-left">' +
-      '<div class="auth-logo">' + ICONS.logo + ' KnitFlow <span style="font-weight:500;color:#a5b4fc">OS</span></div>' +
+      '<div class="auth-logo">' + (store.get('kf_logo') ? '<img src="' + store.get('kf_logo') + '" alt="logo" style="height:32px;width:auto;border-radius:6px;vertical-align:-10px;margin-right:6px">' : ICONS.logo) + ' KnitFlow <span style="font-weight:500;color:#a5b4fc">OS</span></div>' +
       '<div class="auth-hero">' +
         '<h1>Every department.<br><em>One roof. One flow.</em></h1>' +
         '<p>The unified operating system for your knitwear company — merchandising, purchase, dye house and shipping working from a single live thread, from buyer PO to POD.</p>' +
@@ -198,6 +198,7 @@ function renderLogin(err) {
       const r = await api('/login', { method: 'POST', body: { email: $('#login-email').value, password: $('#login-pass').value } });
       state.token = r.token; state.user = r.user;
       store.set('kf_token', r.token);
+      await ensureSettings();
       try {
         location.hash = '#/dashboard';
         render();
@@ -281,7 +282,7 @@ function renderShell() {
   '<div class="app app-docked">' +
     '<div class="main">' +
       '<header class="topbar">' +
-        '<div class="tb-logo">' + ICONS.logo + ' <span><b>KnitFlow</b> <em>OS</em></span></div>' +
+        '<div class="tb-logo">' + (state.settings && state.settings.logo ? '<img src="' + state.settings.logo + '" alt="logo" style="height:30px;width:auto;border-radius:6px">' : ICONS.logo) + ' <span><b>KnitFlow</b> <em>OS</em></span></div>' +
         '<div class="tb-title"><h1 id="tb-title"></h1><p id="tb-sub"></p></div>' +
         '<div class="tb-actions">' +
           '<button class="icon-btn" id="bell-btn" title="Alerts">' + ICONS.bell + '<span class="dot-alert" id="bell-dot" style="display:none"></span></button>' +
@@ -367,7 +368,7 @@ async function route() {
     hr: ['HR & Payroll', 'Employees, attendance & monthly payroll'],
     reports: ['Reports Center', 'Printable management reports — every department'],
     directory: ['Company Hub', 'Departments, team, buyers, suppliers & company profile'],
-    settings: ['Settings', 'Company profile, users & access'],
+    settings: ['Settings', 'Company profile, logo, users, rights & passwords'],
     activity: ['Activity Thread', 'Every department, every move — one live feed'],
     wiki: ['Wiki', 'SOPs, tech sheets & packing instructions — the factory playbook']
   };
@@ -1991,13 +1992,84 @@ async function viewReports(view) {
 
 /* ---------------- settings ---------------- */
 
+const SET_MODULES = [
+  ['orders', 'Orders & styles'], ['buyers', 'Buyers'], ['samples', 'Sampling'],
+  ['reqs', 'Requisitions'], ['pos', 'Purchase orders'], ['suppliers', 'Suppliers'],
+  ['materials', 'Store & materials'], ['batches', 'Dye House'], ['shipments', 'Shipping'],
+  ['production', 'Production floors'], ['machines', 'Machines'], ['inspections', 'Quality control'],
+  ['hr', 'HR & Payroll'], ['finance', 'Finance & costing']
+];
+const SET_ROLE_DEFAULTS = { merchandising: ['orders', 'buyers', 'samples'], purchase: ['reqs', 'pos', 'suppliers', 'materials'], dye: ['batches'], production: ['production', 'machines'], qc: ['inspections'], shipping: ['shipments'], hr: ['hr'], finance: ['finance'] };
+const SET_DEPTS = ['Merchandising', 'Purchase', 'Dye House', 'Shipping', 'Management', 'Production', 'Quality Control', 'Human Resources', 'Finance'];
+
+async function ensureSettings() {
+  try {
+    const r = await api('/settings');
+    state.settings = r.settings;
+    if (r.settings.logo) store.set('kf_logo', r.settings.logo); else store.del('kf_logo');
+  } catch (e) {}
+}
+
 async function viewSettings(view) {
   const [{ settings }, { users }] = await Promise.all([api('/settings'), api('/users')]);
+  state.settings = settings;
+  if (settings.logo) store.set('kf_logo', settings.logo); else store.del('kf_logo');
   const isAdmin = state.user.role === 'admin';
-  const ROLES = [['admin', 'Management (full access)'], ['merchandising', 'Merchandising'], ['purchase', 'Purchase'], ['dye', 'Dye House'], ['production', 'Production'], ['qc', 'Quality Control'], ['shipping', 'Shipping'], ['hr', 'Human Resources'], ['finance', 'Finance']];
-  const dis = isAdmin ? '' : ' disabled';
+  const TABS = isAdmin ? [['account', 'My account'], ['company', 'Company & logo'], ['users', 'Users & rights'], ['wikilib', 'Wiki library']] : [['account', 'My account'], ['company', 'Company profile']];
+  if (!state.setTab || !TABS.some(t => t[0] === state.setTab)) state.setTab = isAdmin ? 'users' : 'account';
+  let body = '';
+  if (state.setTab === 'account') body = acctCard();
+  else if (state.setTab === 'company') body = companyCard(settings, isAdmin);
+  else if (state.setTab === 'users') body = usersCard(users);
+  else body = wikiCard(settings);
   view.innerHTML =
-    '<div class="grid g-2">' +
+    '<div class="toolbar"><div class="tabs">' +
+    TABS.map(t => '<button class="tab ' + (state.setTab === t[0] ? 'active' : '') + '" data-settab="' + t[0] + '">' + t[1] + '</button>').join('') +
+    '</div></div>' + body;
+  view.querySelectorAll('[data-settab]').forEach(t => t.addEventListener('click', () => { state.setTab = t.dataset.settab; viewSettings(view); }));
+  bindAccount(view);
+  bindCompany(view, isAdmin);
+  if (isAdmin) { bindUsers(view, users); bindWiki(view); }
+}
+
+/* ---- my account: profile + own password ---- */
+function acctCard() {
+  const u = state.user;
+  const eff = u.role === 'admin' ? null : (Array.isArray(u.perms) ? u.perms : SET_ROLE_DEFAULTS[u.role] || []);
+  return '<div class="grid g-2">' +
+    '<div class="card"><div class="card-head"><span class="card-title">My account</span></div>' +
+      '<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><span class="avatar" style="width:44px;height:44px;font-size:16px;background:' + (DEPT_COLORS[u.dept] || '#6366f1') + '">' + esc(initials(u.name)) + '</span>' +
+      '<div><b>' + esc(u.name) + '</b><div class="mini">' + esc(u.email) + '</div><div class="mini">' + esc(u.title || '') + ' · ' + esc(u.dept) + '</div></div></div>' +
+      '<div class="mini b" style="margin:4px 0 6px">My module rights</div>' +
+      (u.role === 'admin' ? '<span class="pill p-green">Full access — every module</span>' :
+        '<div style="display:flex;flex-wrap:wrap;gap:6px">' + SET_MODULES.filter(m => eff.includes(m[0])).map(m => '<span class="pill p-slate">' + m[1] + '</span>').join('') + '</div>') +
+      '<div class="mini" style="margin-top:12px">Rights are granted by Management — see Users & rights.</div></div>' +
+    '<div class="card"><div class="card-head"><span class="card-title">Change my password</span></div>' +
+      '<form id="pw-form">' +
+      '<div class="field"><label>Current password</label><input name="current" type="password" required autocomplete="current-password"></div>' +
+      '<div class="form-grid">' +
+      '<div class="field"><label>New password (min 6)</label><input name="next" type="password" required minlength="6" autocomplete="new-password"></div>' +
+      '<div class="field"><label>Repeat new password</label><input name="next2" type="password" required minlength="6" autocomplete="new-password"></div>' +
+      '</div><button class="btn primary" type="submit">Update password</button></form></div></div>';
+}
+function bindAccount(view) {
+  const f = $('#pw-form');
+  if (f) f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const fd = Object.fromEntries(new FormData(f));
+    if (fd.next !== fd.next2) return toast('New passwords do not match', 'error');
+    try {
+      await api('/auth/password', { method: 'POST', body: { current: fd.current, next: fd.next } });
+      toast('Password updated — use it at your next sign-in');
+      f.reset();
+    } catch (err) { toast(err.message, 'error'); }
+  });
+}
+
+/* ---- company profile + logo ---- */
+function companyCard(settings, isAdmin) {
+  const dis = isAdmin ? '' : ' disabled';
+  return '<div class="grid g-2">' +
     '<div class="card"><div class="card-head"><span class="card-title">Company profile</span><span class="right mini">used on invoices & packing lists</span></div>' +
     '<form id="co-form">' +
     '<div class="field"><label>Company name</label><input name="name" value="' + esc(settings.name) + '"' + dis + '></div>' +
@@ -2011,33 +2083,158 @@ async function viewSettings(view) {
     '</div>' +
     (isAdmin ? '<button class="btn primary" type="submit">Save profile</button>' : '<div class="mini">Only Management can edit the company profile.</div>') +
     '</form></div>' +
-    '<div class="card"><div class="card-head"><span class="card-title">Users & access</span>' + (isAdmin ? '<span class="right"><button class="btn sm primary" id="new-user">' + ICONS.plus + ' Add user</button></span>' : '') + '</div>' +
-    '<table class="tbl"><thead><tr><th>User</th><th>Department</th><th>Role</th></tr></thead><tbody>' +
-    users.map(u => '<tr><td><div class="cell-main">' + esc(u.name) + '</div><div class="cell-sub">' + esc(u.email) + '</div></td><td>' + esc(u.dept) + '</td><td><span class="pill p-slate">' + esc(u.role) + '</span></td></tr>').join('') +
-    '</tbody></table>' +
-    (isAdmin ? '' : '<div class="mini" style="margin-top:10px">Only Management can create users.</div>') +
-    '</div></div>';
+    (isAdmin ? '<div class="card"><div class="card-head"><span class="card-title">Company logo</span></div>' +
+      '<div class="mini" style="margin-bottom:10px">Shows on the sign-in screen, the top bar, invoices, packing lists & reports.</div>' +
+      '<div style="border:2px dashed #cbd5e1;border-radius:10px;min-height:110px;display:flex;align-items:center;justify-content:center;padding:14px;background:#f8fafc">' +
+      (settings.logo ? '<img src="' + settings.logo + '" style="max-height:96px;max-width:300px">' : '<span class="mini">No logo yet — upload a PNG or JPG</span>') + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px">' +
+      '<button class="btn primary" id="logo-upload" type="button">' + ICONS.plus + ' Upload logo</button>' +
+      (settings.logo ? '<button class="btn" id="logo-remove" type="button">Remove</button>' : '') +
+      '<input type="file" id="logo-file" accept="image/*" style="display:none"></div></div>' : '') +
+    '</div>';
+}
+function bindCompany(view, isAdmin) {
   const cf = $('#co-form');
   if (cf && isAdmin) cf.addEventListener('submit', async e => {
     e.preventDefault();
     await api('/settings', { method: 'PATCH', body: Object.fromEntries(new FormData(cf)) });
     toast('Company profile saved — documents will use it');
   });
+  const up = $('#logo-upload');
+  if (up) {
+    up.addEventListener('click', () => $('#logo-file').click());
+    $('#logo-file').addEventListener('change', () => {
+      const file = $('#logo-file').files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        const sc = Math.min(1, 360 / img.width, 140 / img.height);
+        const cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(img.width * sc)); cv.height = Math.max(1, Math.round(img.height * sc));
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        api('/settings', { method: 'PATCH', body: { logo: cv.toDataURL('image/png') } }).then(() => {
+          toast('Logo saved — it now shows on sign-in, the top bar & documents');
+          renderShell(); route();
+        }).catch(err => toast(err.message, 'error'));
+      };
+      img.onerror = () => toast('Could not read that image', 'error');
+      img.src = URL.createObjectURL(file);
+    });
+    const rm = $('#logo-remove');
+    if (rm) rm.addEventListener('click', async () => {
+      await api('/settings', { method: 'PATCH', body: { logo: null } });
+      toast('Logo removed');
+      renderShell(); route();
+    });
+  }
+}
+
+/* ---- users, rights, passwords (admin) ---- */
+function usersCard(users) {
+  return '<div class="card"><div class="card-head"><span class="card-title">Users, rights & passwords</span><span class="right"><button class="btn sm primary" id="new-user">' + ICONS.plus + ' Add user</button></span></div>' +
+    '<table class="tbl"><thead><tr><th>User</th><th>Department</th><th>Role</th><th>Status</th><th class="r">Manage</th></tr></thead><tbody>' +
+    users.map(u => '<tr><td><div class="cell-main">' + esc(u.name) + '</div><div class="cell-sub">' + esc(u.email) + '</div></td>' +
+      '<td>' + esc(u.dept) + '</td>' +
+      '<td><span class="pill ' + (u.role === 'admin' ? 'p-green' : 'p-slate') + '">' + esc(u.role) + '</span></td>' +
+      '<td>' + (u.active === false ? '<span class="pill p-red">Deactivated</span>' : '<span class="pill p-green">Active</span>') + '</td>' +
+      '<td class="r" style="white-space:nowrap">' +
+      '<button class="btn sm" data-urights="' + u.id + '">' + ICONS.check + ' Rights</button> ' +
+      '<button class="btn sm" data-upass="' + u.id + '">' + ICONS.doc + ' Password</button> ' +
+      (u.id !== state.user.id ? '<button class="btn sm" data-utoggle="' + u.id + '">' + (u.active === false ? 'Activate' : 'Deactivate') + '</button>' : '') +
+      '</td></tr>').join('') +
+    '</tbody></table>' +
+    '<div class="mini" style="margin-top:10px">Rights override the role defaults · deactivated users cannot sign in · the last active admin is protected.</div></div>';
+}
+function bindUsers(view, users) {
   const nu = $('#new-user');
   if (nu) nu.addEventListener('click', () => openModal({
     title: 'Add user', submitText: 'Create user',
     body: '<div class="form-grid">' +
       '<div class="field"><label>Full name <span class="req">*</span></label><input name="name" required></div>' +
       '<div class="field"><label>Email <span class="req">*</span></label><input name="email" type="email" required></div>' +
-      '<div class="field"><label>Role / Department</label><select name="role">' + ROLES.map(r => '<option value="' + r[0] + '">' + r[1] + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label>Role / Department</label><select name="role">' + ['admin', 'merchandising', 'purchase', 'dye', 'shipping', 'production', 'qc', 'hr', 'finance'].map(r => '<option value="' + r + '">' + r + '</option>').join('') + '</select></div>' +
       '<div class="field"><label>Title</label><input name="title" placeholder="e.g. Dye Machine Operator"></div>' +
-      '<div class="field full"><label>Password</label><input name="password" required placeholder="set an initial password"></div></div>',
+      '<div class="field full"><label>Password (min 6)</label><input name="password" type="password" required minlength="6" autocomplete="new-password" placeholder="set an initial password"></div></div>',
     onSubmit: async fd => {
       await api('/users', { method: 'POST', body: Object.fromEntries(fd) });
       toast('User created — they can sign in now');
-      viewSettings(view);
+      route();
     }
   }));
+  view.querySelectorAll('[data-urights]').forEach(b => b.addEventListener('click', () => {
+    const u = users.find(x => x.id === b.dataset.urights);
+    rightsModal(u);
+  }));
+  view.querySelectorAll('[data-upass]').forEach(b => b.addEventListener('click', () => {
+    const u = users.find(x => x.id === b.dataset.upass);
+    openModal({
+      title: 'Set password — ' + u.name, submitText: 'Save password',
+      body: '<div class="hint">Their new sign-ins will need this password. Minimum 6 characters.</div>' +
+        '<div class="field"><label>New password</label><input name="password" type="password" required minlength="6" autocomplete="new-password"></div>',
+      onSubmit: async fd => {
+        await api('/users/' + u.id + '/password', { method: 'POST', body: { password: fd.password } });
+        toast('Password set for ' + u.name);
+      }
+    });
+  }));
+  view.querySelectorAll('[data-utoggle]').forEach(b => b.addEventListener('click', async () => {
+    const u = users.find(x => x.id === b.dataset.utoggle);
+    try {
+      await api('/users/' + u.id, { method: 'PUT', body: { active: u.active === false } });
+      toast(u.name + (u.active === false ? ' reactivated — they can sign in again' : ' deactivated — sign-ins blocked'));
+      route();
+    } catch (err) { toast(err.message, 'error'); }
+  }));
+}
+function rightsModal(u) {
+  const adminLocked = u.role === 'admin';
+  const eff = adminLocked ? SET_MODULES.map(m => m[0]) : (Array.isArray(u.perms) ? u.perms : SET_ROLE_DEFAULTS[u.role] || []);
+  openModal({
+    title: 'Module rights — ' + u.name, wide: true, submitText: 'Save rights',
+    body: '<div class="hint">Tick the modules this user can open and work in. ' + (adminLocked ? 'Admins always have full access.' : '') + '</div>' +
+      '<div class="form-grid" id="rights-grid">' +
+      SET_MODULES.map(mm => '<label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px"><input type="checkbox" name="perm" value="' + mm[0] + '"' + (eff.includes(mm[0]) ? ' checked' : '') + (adminLocked ? ' disabled' : '') + '><span style="font-size:13px">' + mm[1] + '</span></label>').join('') +
+      '</div>',
+    onSubmit: async () => {
+      const perms = [...document.querySelectorAll('#rights-grid input[name=perm]:checked')].map(x => x.value);
+      await api('/users/' + u.id, { method: 'PUT', body: { perms } });
+      toast('Rights saved for ' + u.name + ' — ' + perms.length + ' modules');
+      route();
+    }
+  });
+  const foot = modalRoot.querySelector('.modal-foot');
+  if (foot && !adminLocked) {
+    foot.insertAdjacentHTML('afterbegin', '<button type="button" class="btn" id="rights-reset">Reset to role default</button>');
+    $('#rights-reset').addEventListener('click', async () => {
+      await api('/users/' + u.id, { method: 'PUT', body: { perms: null } });
+      closeModal();
+      toast('Rights reset to the ' + u.role + ' defaults');
+      route();
+    });
+  }
+}
+
+/* ---- wiki library access (admin) ---- */
+function wikiCard(settings) {
+  const wa = settings.wiki || { read: SET_DEPTS, edit: SET_DEPTS };
+  return '<div class="card"><div class="card-head"><span class="card-title">Wiki library access</span><span class="right mini">' + (wa.read || []).length + ' of ' + SET_DEPTS.length + ' departments can read</span></div>' +
+    '<div class="hint" style="margin-bottom:10px">' + ICONS.wiki + ' Choose which departments can open the library (SOPs, tech sheets, packing instructions) and who may edit documents.</div>' +
+    '<table class="tbl"><thead><tr><th>Department</th><th>Can read library</th><th>Can edit documents</th></tr></thead><tbody>' +
+    SET_DEPTS.map(d => '<tr><td class="cell-main">' + esc(d) + '</td>' +
+      '<td><input type="checkbox" class="wa-read" value="' + esc(d) + '"' + ((wa.read || []).includes(d) ? ' checked' : '') + '></td>' +
+      '<td><input type="checkbox" class="wa-edit" value="' + esc(d) + '"' + ((wa.edit || []).includes(d) ? ' checked' : '') + '></td></tr>').join('') +
+    '</tbody></table><button class="btn primary" id="wa-save" style="margin-top:12px">Save library access</button></div>';
+}
+function bindWiki(view) {
+  const b = $('#wa-save');
+  if (b) b.addEventListener('click', async () => {
+    const read = [...view.querySelectorAll('.wa-read:checked')].map(x => x.value);
+    const edit = [...view.querySelectorAll('.wa-edit:checked')].map(x => x.value);
+    if (!edit.every(x => read.includes(x))) return toast('A department that can edit must also be able to read', 'error');
+    await api('/settings', { method: 'PATCH', body: { wiki: { read, edit } } });
+    toast('Library access saved — ' + read.length + ' can read, ' + edit.length + ' can edit');
+    route();
+  });
 }
 
 /* ---------------- boot ---------------- */
@@ -2058,5 +2255,6 @@ window.addEventListener('hashchange', route);
       catch (e) { state.token = null; store.del('kf_token'); }
     }
   } catch (e) { console.error('boot issue:', e); }
+  if (state.user) await ensureSettings();
   render();
 })();
