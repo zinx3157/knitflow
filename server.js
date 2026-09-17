@@ -47,7 +47,7 @@ function seed() {
   const now = '2026-09-17T09:12:00.000Z';
   const dAgo = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
   return {
-    seq: { order: 1010, req: 9, po: 2606, batch: 2618, ship: 4503, buyer: 6, supplier: 6, act: 100, sample: 209, prod: 105, qc: 505, emp: 17, ex: 108, user: 10, bnd: 5007 },
+    seq: { order: 1010, req: 9, po: 2606, batch: 2618, ship: 4506, buyer: 6, supplier: 6, act: 100, sample: 209, prod: 105, qc: 505, emp: 17, ex: 108, user: 10, bnd: 5007 },
     users: [
       { id: 'U-01', name: 'Amina Rasoanaivo', email: 'admin@knitflow.io', password: 'knit123', role: 'admin', title: 'Managing Director', dept: 'Management' },
       { id: 'U-02', name: 'Hery Andriamampianina', email: 'merch@knitflow.io', password: 'knit123', role: 'merchandising', title: 'Merchandising Manager', dept: 'Merchandising' },
@@ -134,13 +134,15 @@ function seed() {
       { id: 'DB-2617', orderId: 'ORD-1008', color: 'Oatmeal', hex: '#D8CFC0', qtyKg: 6400, machine: 'D-02', recipe: 'MER-OAT-04', yarnMaterialId: 'M-03', status: 'Passed', reworks: 0, startedAt: '2026-09-12T08:00:00.000Z', doneAt: '2026-09-15T14:02:00.000Z', note: '' }
     ],
     shipments: [
-      { id: 'SH-4470', orderId: 'ORD-0990', cartons: 320, cbm: 28, grossKg: 3500, vessel: 'CMA CGM Jules Verne V.220W', booking: 'CMAU6610234', etd: '2026-06-10', eta: '2026-07-08',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Le Havre (FRLEH)',    status: 'Delivered', createdAt: '2026-06-01T08:00:00.000Z' },
-      { id: 'SH-4481', orderId: 'ORD-0992', cartons: 405, cbm: 45, grossKg: 5600, vessel: 'MSC Ambra V.114W',          booking: 'MSCU4410027', etd: '2026-07-12', eta: '2026-08-09',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'New York (USNYC)',    status: 'Delivered', createdAt: '2026-07-02T08:00:00.000Z' },
-      { id: 'SH-4488', orderId: 'ORD-0991', cartons: 560, cbm: 62, grossKg: 8900, vessel: 'Maersk Edmonton V.302E',    booking: 'MAEU7712083', etd: '2026-07-28', eta: '2026-08-24',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Felixstowe (GBFXT)',  status: 'Delivered', createdAt: '2026-07-18T08:00:00.000Z' },
-      { id: 'SH-4490', orderId: 'ORD-0993', cartons: 610, cbm: 55, grossKg: 7500, vessel: 'Ever Given V.091S',         booking: 'EGLV9012771', etd: '2026-08-05', eta: '2026-09-01',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Hamburg (DEHAM)',     status: 'Delivered', createdAt: '2026-07-25T08:00:00.000Z' },
-      { id: 'SH-4500', orderId: 'ORD-1006', cartons: 480, cbm: 41, grossKg: 4100, vessel: 'CMA CGM Mars V.088W',       booking: 'CMAU8891020', etd: '2026-08-22', eta: '2026-09-16',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Le Havre (FRLEH)',    status: 'Delivered', createdAt: '2026-08-10T08:00:00.000Z' },
-      { id: 'SH-4501', orderId: 'ORD-1005', cartons: 610, cbm: 68, grossKg: 7900, vessel: 'MSC Ambra V.226W',          booking: 'MSCU2266110', etd: '2026-09-10', eta: '2026-10-08',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Felixstowe (GBFXT)',  status: 'In Transit', createdAt: '2026-09-01T08:00:00.000Z' },
-      { id: 'SH-4502', orderId: 'ORD-1004', cartons: 395, cbm: 52, grossKg: 6300, vessel: 'Maersk Sentosa V.418E',     booking: 'MAEU8811204', etd: '2026-10-02', eta: '2026-10-30',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Hamburg (DEHAM)',     status: 'Packing', createdAt: '2026-09-17T08:05:00.000Z' }
+      { id: 'SH-4470', mode: 'Sea', orderId: 'ORD-0990', cartons: 320, cbm: 28, grossKg: 3500, vessel: 'CMA CGM Jules Verne V.220W', booking: 'CMAU6610234', etd: '2026-06-10', eta: '2026-07-08',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Le Havre (FRLEH)',    status: 'Delivered', createdAt: '2026-06-01T08:00:00.000Z' },
+      { id: 'SH-4481', mode: 'Sea', orderId: 'ORD-0992', cartons: 405, cbm: 45, grossKg: 5600, vessel: 'MSC Ambra V.114W',          booking: 'MSCU4410027', etd: '2026-07-12', eta: '2026-08-09',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'New York (USNYC)',    status: 'Delivered', createdAt: '2026-07-02T08:00:00.000Z' },
+      { id: 'SH-4488', mode: 'Sea', orderId: 'ORD-0991', cartons: 560, cbm: 62, grossKg: 8900, vessel: 'Maersk Edmonton V.302E',    booking: 'MAEU7712083', etd: '2026-07-28', eta: '2026-08-24',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Felixstowe (GBFXT)',  status: 'Delivered', createdAt: '2026-07-18T08:00:00.000Z' },
+      { id: 'SH-4490', mode: 'Sea', orderId: 'ORD-0993', cartons: 610, cbm: 55, grossKg: 7500, vessel: 'Ever Given V.091S',         booking: 'EGLV9012771', etd: '2026-08-05', eta: '2026-09-01',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Hamburg (DEHAM)',     status: 'Delivered', createdAt: '2026-07-25T08:00:00.000Z' },
+      { id: 'SH-4500', mode: 'Sea', orderId: 'ORD-1006', cartons: 480, cbm: 41, grossKg: 4100, vessel: 'CMA CGM Mars V.088W',       booking: 'CMAU8891020', etd: '2026-08-22', eta: '2026-09-16',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Le Havre (FRLEH)',    status: 'Delivered', createdAt: '2026-08-10T08:00:00.000Z' },
+      { id: 'SH-4501', mode: 'Sea', orderId: 'ORD-1005', cartons: 610, cbm: 68, grossKg: 7900, vessel: 'MSC Ambra V.226W',          booking: 'MSCU2266110', etd: '2026-09-10', eta: '2026-10-08',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Felixstowe (GBFXT)',  status: 'In Transit', createdAt: '2026-09-01T08:00:00.000Z' },
+      { id: 'SH-4502', mode: 'Sea', orderId: 'ORD-1004', cartons: 395, cbm: 52, grossKg: 6300, vessel: 'Maersk Sentosa V.418E',     booking: 'MAEU8811204', etd: '2026-10-02', eta: '2026-10-30',  portLoading: 'Toamasina (MGTGA)', portDischarge: 'Hamburg (DEHAM)',     status: 'Packing', createdAt: '2026-09-17T08:05:00.000Z' },
+      { id: 'SH-4504', mode: 'Air', orderId: 'ORD-1002', cartons: 22, cbm: 3.2, grossKg: 360, flightNo: 'ET852 TNR→CDG', airwaybill: '071-88234761', carrier: 'Ethiopian Airlines Cargo', vessel: '', booking: '', etd: '2026-09-16', eta: '2026-09-19', portLoading: 'Antananarivo (TNR)', portDischarge: 'Paris CDG (FRCDG)', status: 'In Transit', createdAt: '2026-09-15T09:00:00.000Z', note: 'Rush 1,200 pcs — buyer launch deadline' },
+      { id: 'SH-4505', mode: 'Courier', orderId: 'ORD-1001', cartons: 1, cbm: 0.1, grossKg: 4, carrier: 'DHL', trackingNo: 'JD014600003812345678', flightNo: '', airwaybill: '', vessel: '', booking: '', etd: '2026-09-17', eta: '2026-09-19', portLoading: 'Antananarivo (TNR)', portDischarge: 'London (GBLHR)', status: 'In Transit', createdAt: '2026-09-17T07:40:00.000Z', note: 'TOP samples + shipping docs' }
     ],
     samples: [
       { id: 'SMP-201', orderId: 'ORD-1001', type: 'PP Sample', status: 'Approved', sentDate: '2026-08-10', approvedDate: '2026-08-18', note: 'Navy approved — camel 5% lighter' },
@@ -276,6 +278,7 @@ function load() {
       if (!db.bundles) db.bundles = [];
       if (!db.seq.bnd) db.seq.bnd = 5007;
       if (!db.settings.dyeStd) db.settings.dyeStd = { waterLPkg: 60, powerKwhPkg: 1.2, steamKgPkg: 5 };
+      for (const sp of db.shipments || []) if (!sp.mode) sp.mode = 'Sea';
       return;
     }
     catch (e) { console.error('DB corrupt, reseeding:', e.message); }
@@ -444,7 +447,7 @@ function buildDoc(type, shipId) {
   } else {
     inner = '<div class="meta">' +
       '<div><h4>Ship to</h4><b>' + (buyer.name || '-') + '</b><br>' + ship.portDischarge + '</div>' +
-      '<div style="text-align:right"><h4>Shipment details</h4>Packing List No: <b>PL-' + ship.id.replace('SH-', '') + '</b><br>Date: ' + new Date().toISOString().slice(0, 10) + '<br>Vessel: ' + ship.vessel + '<br>Booking: ' + ship.booking + '</div></div>' +
+      '<div style="text-align:right"><h4>Shipment details</h4>Packing List No: <b>PL-' + ship.id.replace('SH-', '') + '</b><br>Date: ' + new Date().toISOString().slice(0, 10) + '<br>' + ((ship.mode === 'Air') ? 'Flight: ' + (ship.flightNo || '—') + ' · AWB: ' + (ship.airwaybill || '—') : (ship.mode === 'Courier') ? (ship.carrier || 'Courier') + ' · Tracking: ' + (ship.trackingNo || '—') : 'Vessel: ' + (ship.vessel || '—') + ' · Booking: ' + (ship.booking || '—')) + '</div></div>' +
       '<table><tr><th>#</th><th>Color / Shade</th><th style="text-align:right">Quantity</th><th>Cartons</th></tr>' +
       '<tr><td colspan="4"><b>' + order.style + ' · ' + (order.gauge || '') + '</b></td></tr>' + rows + '</table>' +
       '<table><tr><th>Metric</th><th style="text-align:right">Value</th></tr>' +
@@ -884,9 +887,14 @@ async function apiRoute(req, res, p) {
     if (['Shipped', 'Delivered'].includes(order.stage)) return json(res, 400, { error: 'Order already shipped' });
     const ship = {
       id: 'SH-' + (db.seq.ship++), orderId: order.id,
+      mode: ['Sea', 'Air', 'Courier'].includes(b.mode) ? b.mode : 'Sea',
       cartons: Number(b.cartons) || 0, cbm: Number(b.cbm) || 0, grossKg: Number(b.grossKg) || 0,
-      vessel: b.vessel || '', booking: b.booking || '', etd: b.etd || '', eta: b.eta || '',
+      vessel: b.vessel || '', booking: b.booking || '',
+      flightNo: b.flightNo || '', airwaybill: b.airwaybill || '',
+      carrier: b.carrier || '', trackingNo: b.trackingNo || '',
+      etd: b.etd || '', eta: b.eta || '',
       portLoading: b.portLoading || 'Toamasina (MGTGA)', portDischarge: b.portDischarge || '',
+      note: b.note || '',
       status: 'Packing', createdAt: new Date().toISOString()
     };
     db.shipments.unshift(ship);

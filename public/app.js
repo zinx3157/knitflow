@@ -9,6 +9,8 @@ const PO_PILL = { 'Draft':'p-slate','Sent':'p-blue','Partial':'p-amber','Receive
 const BATCH_PILL = { 'Queued':'p-slate','Dyeing':'p-purple','Drying':'p-cyan','QC':'p-amber','Passed':'p-green','Rework':'p-red' };
 const SHIP_PILL = { 'Packing':'p-orange','Booked':'p-blue','In Transit':'p-indigo','Delivered':'p-green' };
 const SHIP_NEXT = { 'Packing':'Booked','Booked':'In Transit','In Transit':'Delivered' };
+const SHIP_MODES = { Sea: { color: '#0ea5e9', icon: 'ship', tag: 'SEA' }, Air: { color: '#8b5cf6', icon: 'airplane', tag: 'AIR' }, Courier: { color: '#f59e0b', icon: 'package', tag: 'COURIER' } };
+const MODE_PILL = { Sea: 'p-sky', Air: 'p-purple', Courier: 'p-amber' };
 const BATCH_NEXT = { 'Queued':'Dyeing','Dyeing':'Drying','Drying':'QC' };
 const DEPT_COLORS = { 'Merchandising':'#6366f1','Purchase':'#f59e0b','Dye House':'#8b5cf6','Shipping':'#0ea5e9','Management':'#10b981','Production':'#ea580c','Quality Control':'#0d9488','Human Resources':'#db2777','Finance':'#16a34a' };
 const DEPT_PERMS = { admin: ['orders','buyers','samples','reqs','pos','suppliers','materials','batches','shipments','production','machines','inspections','hr','finance'], merchandising: ['orders','buyers','samples'], purchase: ['reqs','pos','suppliers','materials'], dye: ['batches'], production: ['production','machines'], qc: ['inspections'], shipping: ['shipments'], hr: ['hr'], finance: ['finance'] };
@@ -115,6 +117,8 @@ const ICONS = {
   doc: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>',
   arrow: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   print: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>',
+  airplane: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>',
+  package: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8.5v9L12 22l-9-4.5v-9L12 4l9 4.5z"/><path d="M3.3 8.6L12 13l8.7-4.4"/><path d="M12 13v9"/></svg>',
   barcode: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6v12M8 6v12M11 6v12M14 6v12M18 6v12M21 6v12"/></svg>',
   flame: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
   cart: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/><path d="M3 4h2l2.6 11.5a1.5 1.5 0 0 0 1.5 1.2h7.6a1.5 1.5 0 0 0 1.5-1.2L20 8H6"/></svg>',
@@ -610,9 +614,11 @@ async function viewOrderDetail(view, id) {
   const batchRows = d.batches.map(b =>
     '<tr><td class="cell-main">' + esc(b.id) + '</td><td><span class="swatch"><i style="background:' + b.hex + '"></i>' + esc(b.color) + '</span></td><td class="num">' + num(b.qtyKg) + ' kg</td><td>' + esc(b.machine) + '</td><td>' + esc(b.recipe || '—') + '</td><td>' + pill(BATCH_PILL, b.status) + '</td></tr>'
   ).join('');
-  const shipRows = d.shipments.map(s =>
-    '<tr><td class="cell-main">' + esc(s.id) + '</td><td class="num">' + num(s.cartons) + ' ctns · ' + num(s.cbm) + ' cbm</td><td>' + esc(s.vessel || '—') + '<div class="cell-sub">' + esc(s.portLoading) + ' → ' + esc(s.portDischarge) + '</div></td><td>ETD ' + fmtDate(s.etd) + '<div class="cell-sub">ETA ' + fmtDate(s.eta) + '</div></td><td>' + pill(SHIP_PILL, s.status) + '</td></tr>'
-  ).join('');
+  const shipRows = d.shipments.map(s => {
+    const mode = s.mode || 'Sea';
+    const ref = mode === 'Air' ? esc(s.flightNo || '—') + ' · AWB ' + esc(s.airwaybill || '—') : mode === 'Courier' ? esc(s.carrier || '—') + ' · ' + esc(s.trackingNo || '—') : esc(s.vessel || '—') + ' · ' + esc(s.booking || '—');
+    return '<tr><td><span class="cell-main">' + esc(s.id) + '</span> <span class="pill ' + MODE_PILL[mode] + '">' + SHIP_MODES[mode].tag + '</span></td><td class="num">' + num(s.cartons) + ' ctns · ' + num(s.grossKg) + ' kg</td><td>' + ref + '<div class="cell-sub">' + esc(s.portLoading) + ' → ' + esc(s.portDischarge) + '</div></td><td>ETD ' + fmtDate(s.etd) + '<div class="cell-sub">ETA ' + fmtDate(s.eta) + '</div></td><td>' + pill(SHIP_PILL, s.status) + '</td></tr>';
+  }).join('');
 
   const extraCards = [];
   if (d.samples.length) extraCards.push('<div class="card"><div class="card-head"><span class="card-title">Samples & approvals</span></div><table class="tbl"><thead><tr><th>Sample</th><th>Type</th><th>Status</th><th>Sent</th><th>Approved</th><th>Note</th></tr></thead><tbody>' + d.samples.map(sm => '<tr><td class="cell-main">' + esc(sm.id) + '</td><td>' + esc(sm.type) + '</td><td>' + pill(SAMPLE_PILL, sm.status) + '</td><td>' + fmtDate(sm.sentDate) + '</td><td>' + fmtDate(sm.approvedDate) + '</td><td class="mini">' + esc(sm.note || '—') + '</td></tr>').join('') + '</tbody></table></div>');
@@ -931,23 +937,28 @@ async function viewShipping(view) {
   const { shipments } = await api('/shipments');
   const { orders } = await api('/orders');
   const actionable = can('shipments');
+  const modeOf = sh => sh.mode || 'Sea';
+  if (!state.shipMode) state.shipMode = 'All';
+  const filtered = shipments.filter(sh => state.shipMode === 'All' || modeOf(sh) === state.shipMode);
   const inTransit = shipments.filter(s => s.status === 'In Transit');
+  const transitByMode = { Sea: inTransit.filter(s => modeOf(s) === 'Sea').length, Air: inTransit.filter(s => modeOf(s) === 'Air').length, Courier: inTransit.filter(s => modeOf(s) === 'Courier').length };
   const deliveredThisMonth = shipments.filter(s => s.status === 'Delivered' && (s.eta || '').startsWith(new Date().toISOString().slice(0, 7)));
 
   const cards = shipments.map(s => {
     const next = SHIP_NEXT[s.status];
     const late = s.status !== 'Delivered' && s.eta && daysUntil(s.eta) < 0;
     let actions = '';
-    if (actionable && next) actions += '<button class="btn sm primary" data-adv="' + esc(s.id) + '">' + (next === 'Booked' ? 'Confirm booking' : next === 'In Transit' ? 'On board / sailed' : 'Mark delivered') + '</button>';
+    if (actionable && next) actions += '<button class="btn sm primary" data-adv="' + esc(s.id) + '">' + (next === 'Booked' ? (modeOf(s) === 'Sea' ? 'Confirm booking' : modeOf(s) === 'Air' ? 'Confirm AWB' : 'Hand to courier') : next === 'In Transit' ? (modeOf(s) === 'Sea' ? 'On board / sailed' : modeOf(s) === 'Air' ? 'Departed' : 'Picked up') : 'Mark delivered') + '</button>';
     actions += '<button class="btn sm" data-doc="' + esc(s.id) + '" data-type="packing-list">' + ICONS.doc + ' Packing list</button>' +
                '<button class="btn sm" data-doc="' + esc(s.id) + '" data-type="invoice">' + ICONS.doc + ' Invoice</button>';
-    return '<div class="card" style="border-top:4px solid ' + (s.status === 'Delivered' ? '#10b981' : s.status === 'In Transit' ? '#6366f1' : '#f97316') + '">' +
-      '<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><b style="font-size:15px">' + esc(s.id) + '</b>' + pill(SHIP_PILL, s.status) + (late ? '<span class="due late">ETA passed</span>' : '') + '<span style="margin-left:auto" class="mini">' + esc(s.incoterm) + ' Toamasina</span></div>' +
+    const mo = SHIP_MODES[modeOf(s)];
+    return '<div class="card" style="border-top:4px solid ' + mo.color + '">' +
+      '<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap"><b style="font-size:15px">' + esc(s.id) + '</b><span class="pill ' + MODE_PILL[modeOf(s)] + '">' + ICONS[mo.icon] + ' ' + mo.tag + '</span>' + pill(SHIP_PILL, s.status) + (late ? '<span class="due late">ETA passed</span>' : '') + '<span style="margin-left:auto" class="mini">' + esc(s.incoterm) + '</span></div>' +
       '<div class="mini" style="margin:8px 0 2px"><b class="mini b">' + esc(s.orderId) + '</b> (' + esc(s.orderPo || '') + ') · ' + esc(s.buyerName) + '</div>' +
       '<div class="mini">' + esc(s.style) + ' · ' + num(s.orderQty || 0) + ' pcs</div>' +
       '<table class="tbl" style="margin-top:10px"><tbody>' +
         '<tr><td class="mini">Load</td><td class="num"><b>' + num(s.cartons) + '</b> cartons · ' + num(s.cbm) + ' CBM · ' + num(s.grossKg) + ' kg</td></tr>' +
-        '<tr><td class="mini">Vessel</td><td>' + esc(s.vessel || '—') + '<div class="cell-sub">Booking ' + esc(s.booking || '—') + '</div></td></tr>' +
+        '<tr><td class="mini">' + (modeOf(s) === 'Sea' ? 'Vessel' : modeOf(s) === 'Air' ? 'Flight' : 'Courier') + '</td><td>' + esc(modeOf(s) === 'Sea' ? (s.vessel || '—') : modeOf(s) === 'Air' ? (s.flightNo || '—') : (s.carrier || '—')) + '<div class="cell-sub">' + (modeOf(s) === 'Sea' ? 'Booking ' + esc(s.booking || '—') : modeOf(s) === 'Air' ? 'AWB ' + esc(s.airwaybill || '—') : 'Tracking ' + esc(s.trackingNo || '—')) + '</div></td></tr>' +
         '<tr><td class="mini">Route</td><td>' + esc(s.portLoading) + ' → ' + esc(s.portDischarge || '—') + '</td></tr>' +
         '<tr><td class="mini">Window</td><td>ETD <b>' + fmtDate(s.etd) + '</b> · ETA <b>' + fmtDate(s.eta) + '</b></td></tr>' +
       '</tbody></table>' +
@@ -961,8 +972,12 @@ async function viewShipping(view) {
       '<span class="s-chip"><b class="num">' + num(shipments.reduce((a, s) => a + (s.cartons || 0), 0)) + '</b><span>cartons shipped YTD</span></span>' +
     '</div><span class="spacer"></span>' +
     (actionable ? '<button class="btn primary" id="new-ship">' + ICONS.plus + ' New shipment</button>' : '') + '</div>' +
+    '<div class="toolbar"><div class="tabs">' +
+    ['All', 'Sea', 'Air', 'Courier'].map(mo2 => '<button class="tab ' + (state.shipMode === mo2 ? 'active' : '') + '" data-shipmode="' + mo2 + '">' + (mo2 === 'All' ? 'All (' + shipments.length + ')' : mo2 === 'Sea' ? ICONS.ship + ' Sea (' + transitByMode.Sea + ' moving)' : mo2 === 'Air' ? ICONS.airplane + ' Air (' + transitByMode.Air + ')' : ICONS.package + ' Courier (' + transitByMode.Courier + ')') + '</button>').join('') +
+    '</div></div>' +
     '<div class="grid g-2">' + cards + '</div>';
 
+  view.querySelectorAll('[data-shipmode]').forEach(t => t.addEventListener('click', () => { state.shipMode = t.dataset.shipmode; viewShipping(view); }));
   view.querySelectorAll('[data-adv]').forEach(b => b.addEventListener('click', async () => {
     const s = await api('/shipments/' + b.dataset.adv + '/advance', { method: 'POST' });
     toast('Shipment ' + s.id + ' → ' + s.status);
@@ -992,26 +1007,58 @@ async function viewShipping(view) {
 }
 
 function shipmentModal(orders) {
+  const DEST = ['Toamasina (MGTGA)', 'Antananarivo (TNR)', 'Hamburg (DEHAM)', 'Felixstowe (GBFXT)', 'New York (USNYC)', 'Le Havre (FRLEH)', 'Rotterdam (NLRTM)', 'Copenhagen (DKCPH)', 'Paris CDG (FRCDG)', 'London LHR (GBLHR)', 'Frankfurt (FRA)', 'Dubai DXB (AEDXB)', 'Hong Kong HKG', 'Johannesburg (JNB)'];
   openModal({
-    title: 'New shipment — Shipping desk', wide: true, submitText: 'Open shipment & start packing',
-    body: '<div class="hint">Opening a shipment moves the order to <b>Packing</b>; sailing marks it <b>Shipped</b>, delivery closes the file.</div>' +
+    title: 'New shipment — choose the mode', wide: true, submitText: 'Open shipment & start packing',
+    body: '<div class="hint">' + ICONS.ship + ' <b>Sea</b> = full containers (vessel + booking). ' + ICONS.airplane + ' <b>Air</b> = rush orders (flight + AWB). ' + ICONS.package + ' <b>Courier</b> = samples, docs & top-ups (DHL/FedEx + tracking).</div>' +
+      '<div class="field"><label>Transport mode</label><div class="tabs" id="ship-mode-tabs">' +
+      ['Sea', 'Air', 'Courier'].map((m2, i) => '<button type="button" class="tab' + (i === 0 ? ' active' : '') + '" data-mode="' + m2 + '">' + ICONS[SHIP_MODES[m2].icon] + ' ' + m2 + '</button>').join('') +
+      '</div><input type="hidden" name="mode" id="ship-mode" value="Sea"></div>' +
       '<div class="field"><label>Order <span class="req">*</span></label><select name="orderId">' + orders.map(o => '<option value="' + o.id + '">' + o.id + ' — ' + esc(o.style) + ' (' + esc(o.stage) + ')</option>').join('') + '</select></div>' +
       '<div class="form-grid">' +
-      '<div class="field"><label>Cartons</label><input name="cartons" type="number" min="1" placeholder="400" required></div>' +
-      '<div class="field"><label>Volume (CBM)</label><input name="cbm" type="number" step="0.1" min="0" placeholder="52"></div>' +
-      '<div class="field"><label>Gross weight (kg)</label><input name="grossKg" type="number" min="0" placeholder="6300"></div>' +
+      '<div class="field"><label>Cartons</label><input name="cartons" type="number" min="1" value="400"></div>' +
+      '<div class="field"><label id="lbl-cbm">' + ICONS.ship + ' Volume (CBM)</label><input name="cbm" type="number" step="0.1" min="0" value="52"></div>' +
+      '<div class="field"><label>Gross weight (kg)</label><input name="grossKg" type="number" min="0" value="6300"></div>' +
+      '<div class="field"><label>Incoterm</label><select name="incoterm"><option>FOB</option><option>CIF</option><option>EXW</option><option>DDP</option></select></div>' +
+      '</div>' +
+      '<div id="f-sea"><div class="form-grid">' +
       '<div class="field"><label>Vessel / Voyage</label><input name="vessel" placeholder="Maersk Sentosa V.418E"></div>' +
       '<div class="field"><label>Booking no.</label><input name="booking" placeholder="MAEU8811204"></div>' +
-      '<div class="field"><label>Discharge port</label><select name="portDischarge">' + PORTS.map(p => '<option>' + p + '</option>').join('') + '</select></div>' +
-      '<div class="field"><label>ETD</label><input name="etd" type="date"></div>' +
-      '<div class="field"><label>ETA</label><input name="eta" type="date"></div>' +
+      '</div></div>' +
+      '<div id="f-air" style="display:none"><div class="form-grid">' +
+      '<div class="field"><label>Flight / Voyage</label><input name="flightNo" placeholder="ET852 TNR→CDG"></div>' +
+      '<div class="field"><label>AWB no.</label><input name="airwaybill" placeholder="071-88234761"></div>' +
+      '</div></div>' +
+      '<div id="f-courier" style="display:none"><div class="form-grid">' +
+      '<div class="field"><label>Courier</label><select name="carrier"><option>DHL</option><option>FedEx</option><option>UPS</option><option>Aramex</option><option>TNT</option></select></div>' +
+      '<div class="field"><label>Tracking no.</label><input name="trackingNo" placeholder="JD014600003812345678"></div>' +
+      '</div></div>' +
+      '<div class="form-grid">' +
+      '<div class="field"><label>Origin</label><input name="portLoading" value="Toamasina (MGTGA)"></div>' +
+      '<div class="field"><label>Destination</label><input name="portDischarge" list="dest-dl" placeholder="port or airport"><datalist id="dest-dl">' + DEST.map(dd => '<option value="' + dd + '">').join('') + '</datalist></div>' +
+      '<div class="field"><label>Departure (ETD)</label><input name="etd" type="date"></div>' +
+      '<div class="field"><label>Arrival (ETA)</label><input name="eta" type="date"></div>' +
+      '<div class="field full"><label>Note</label><input name="note" placeholder="e.g. rush 1,200 pcs — buyer launch deadline"></div>' +
       '</div>',
     onSubmit: async fd => {
-      const s = await api('/shipments', { method: 'POST', body: Object.fromEntries(fd) });
-      toast('Shipment ' + s.id + ' created — packing floor notified');
+      const body = Object.fromEntries(fd);
+      const s = await api('/shipments', { method: 'POST', body });
+      toast('Shipment ' + s.id + ' opened — ' + s.mode + ' mode, packing floor notified');
       route();
     }
   });
+  document.querySelectorAll('#ship-mode-tabs .tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('#ship-mode-tabs .tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const m2 = t.dataset.mode;
+    $('#ship-mode').value = m2;
+    $('#f-sea').style.display = m2 === 'Sea' ? '' : 'none';
+    $('#f-air').style.display = m2 === 'Air' ? '' : 'none';
+    $('#f-courier').style.display = m2 === 'Courier' ? '' : 'none';
+    $('#lbl-cbm').innerHTML = (m2 === 'Courier' ? ICONS.package : m2 === 'Air' ? ICONS.airplane : ICONS.ship) + (m2 === 'Courier' ? ' Packages' : ' Volume (CBM)');
+    const cart = modalRoot.querySelector('[name=cartons]');
+    if (cart) cart.value = m2 === 'Courier' ? 1 : m2 === 'Air' ? 22 : 400;
+  }));
 }
 
 /* ---------------- inventory ---------------- */
