@@ -1,0 +1,6 @@
+# runtime database (regenerates automatically; keep seed.json tracked)
+data/db.json
+data/db.json.tmp
+data/backups/
+node_modules/
+.DS_Store
